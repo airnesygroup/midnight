@@ -1,0 +1,2166 @@
+{
+  "schemaVersion": 1,
+  "collections": {
+    "articles": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "excerpt": {
+              "type": "string"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "html_body": {
+              "type": "string",
+              "minLength": 1
+            },
+            "summary": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "section": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "minItems": 1,
+              "maxItems": 3
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "category": {
+              "type": "string",
+              "minLength": 1
+            },
+            "desk": {
+              "type": "string"
+            },
+            "img": {
+              "type": "string",
+              "minLength": 1
+            },
+            "imageAlt": {
+              "type": "string"
+            },
+            "hashtags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "readingMinutes": {
+              "bsonType": [
+                "int",
+                "long",
+                "double"
+              ],
+              "multipleOf": 1,
+              "exclusiveMinimum": 0
+            },
+            "time": {
+              "type": "string"
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "publishedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "source_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "voice": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "views": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "shares": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "saves": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "likes": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "comments": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "headlineWeight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "featured": {
+              "type": "boolean"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published",
+                "paused",
+                "archived"
+              ]
+            },
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "enum": [
+                    "sample",
+                    "measured",
+                    "unknown"
+                  ]
+                },
+                "publication": {
+                  "type": "string",
+                  "enum": [
+                    "sample",
+                    "measured",
+                    "unknown"
+                  ]
+                },
+                "engagement": {
+                  "type": "string",
+                  "enum": [
+                    "sample",
+                    "measured",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "content",
+                "publication",
+                "engagement"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "slug",
+            "title",
+            "subtitle",
+            "excerpt",
+            "body",
+            "html_body",
+            "summary",
+            "section",
+            "tag",
+            "category",
+            "desk",
+            "img",
+            "imageAlt",
+            "hashtags",
+            "readingMinutes",
+            "time",
+            "createdAt",
+            "updatedAt",
+            "publishedAt",
+            "source_name",
+            "source_url",
+            "voice",
+            "views",
+            "shares",
+            "saves",
+            "likes",
+            "comments",
+            "headlineWeight",
+            "featured",
+            "status",
+            "provenance"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "article_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "article_slug",
+          "key": {
+            "slug": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "section_publication",
+          "key": {
+            "status": 1,
+            "tag": 1,
+            "publishedAt": -1,
+            "slug": 1
+          }
+        },
+        {
+          "name": "popular",
+          "key": {
+            "status": 1,
+            "views": -1,
+            "slug": 1
+          }
+        },
+        {
+          "name": "headlines",
+          "key": {
+            "status": 1,
+            "featured": 1,
+            "headlineWeight": -1
+          }
+        },
+        {
+          "name": "hashtags",
+          "key": {
+            "status": 1,
+            "hashtags": 1
+          }
+        }
+      ]
+    },
+    "trends": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "excerpt": {
+              "type": "string"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "summary": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "hashtags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "img": {
+              "type": "string",
+              "minLength": 1
+            },
+            "imageAlt": {
+              "type": "string"
+            },
+            "readingMinutes": {
+              "bsonType": [
+                "int",
+                "long",
+                "double"
+              ],
+              "multipleOf": 1,
+              "exclusiveMinimum": 0
+            },
+            "time": {
+              "type": "string"
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "publishedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "source_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "views": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "shares": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "headlineWeight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "featured": {
+              "type": "boolean"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published",
+                "paused",
+                "archived"
+              ]
+            },
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "enum": [
+                    "sample",
+                    "measured",
+                    "unknown"
+                  ]
+                },
+                "publication": {
+                  "type": "string",
+                  "enum": [
+                    "sample",
+                    "measured",
+                    "unknown"
+                  ]
+                },
+                "engagement": {
+                  "type": "string",
+                  "enum": [
+                    "sample",
+                    "measured",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "content",
+                "publication",
+                "engagement"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "slug",
+            "title",
+            "subtitle",
+            "excerpt",
+            "body",
+            "summary",
+            "hashtags",
+            "img",
+            "imageAlt",
+            "readingMinutes",
+            "time",
+            "createdAt",
+            "updatedAt",
+            "publishedAt",
+            "source_name",
+            "source_url",
+            "views",
+            "shares",
+            "headlineWeight",
+            "featured",
+            "status",
+            "provenance"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "trend_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "trend_slug",
+          "key": {
+            "slug": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "trend_publication",
+          "key": {
+            "status": 1,
+            "publishedAt": -1,
+            "slug": 1
+          }
+        },
+        {
+          "name": "trend_popular",
+          "key": {
+            "status": 1,
+            "views": -1,
+            "slug": 1
+          }
+        },
+        {
+          "name": "trend_hashtags",
+          "key": {
+            "status": 1,
+            "hashtags": 1,
+            "publishedAt": -1
+          }
+        }
+      ]
+    },
+    "sections": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "name": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "slug",
+            "name",
+            "desc",
+            "tags",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "section_slug",
+          "key": {
+            "slug": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "reports": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "title": {
+              "type": "string"
+            },
+            "editionDate": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "editionTimezone": {
+              "type": "string",
+              "const": "UTC"
+            },
+            "introduction": {
+              "type": "string"
+            },
+            "lead": {
+              "type": "object",
+              "properties": {
+                "articleId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "excerpt": {
+                  "type": "string"
+                },
+                "paragraphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "html_body": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "articleId",
+                "title",
+                "excerpt",
+                "paragraphs",
+                "html_body"
+              ],
+              "additionalProperties": false
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "paragraphs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "html_body": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tag",
+                  "title",
+                  "paragraphs",
+                  "html_body"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "lastWord": {
+              "type": "string"
+            },
+            "html_body": {
+              "type": "string"
+            },
+            "coverImage": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "coverImageAlt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "publishedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published",
+                "paused",
+                "archived"
+              ]
+            },
+            "provenance": {
+              "type": "string",
+              "enum": [
+                "sample",
+                "measured",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "slug",
+            "title",
+            "editionDate",
+            "editionTimezone",
+            "introduction",
+            "lead",
+            "sections",
+            "lastWord",
+            "html_body",
+            "coverImage",
+            "coverImageAlt",
+            "createdAt",
+            "updatedAt",
+            "publishedAt",
+            "status",
+            "provenance"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "report_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "report_date",
+          "key": {
+            "editionDate": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "infoPages": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "title": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "heading": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "bullets": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "heading"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "facts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "label",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "slug",
+            "title",
+            "text",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "info_slug",
+          "key": {
+            "slug": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "placements": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string"
+            },
+            "articleIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "key",
+            "articleIds",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "placement_key",
+          "key": {
+            "key": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "profiles": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "displayName": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "avatarUrl": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "preferences": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "boolean",
+                  "number"
+                ]
+              }
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "userId",
+            "displayName",
+            "username",
+            "avatarUrl",
+            "preferences",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "profile_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "userRoles": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "reader",
+                "admin"
+              ]
+            },
+            "grantedBy": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "userId",
+            "role",
+            "grantedBy",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "user_role",
+          "key": {
+            "userId": 1,
+            "role": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "comments": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "articleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "parentId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "rootId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "visible",
+                "pending",
+                "removed"
+              ]
+            },
+            "likes": {
+              "bsonType": [
+                "int",
+                "long",
+                "double"
+              ],
+              "multipleOf": 1,
+              "minimum": 0
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "deletedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "articleId",
+            "userId",
+            "parentId",
+            "rootId",
+            "text",
+            "status",
+            "likes",
+            "createdAt",
+            "updatedAt",
+            "deletedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "comment_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "discussion",
+          "key": {
+            "articleId": 1,
+            "status": 1,
+            "createdAt": 1
+          }
+        },
+        {
+          "name": "replies",
+          "key": {
+            "parentId": 1,
+            "createdAt": 1
+          }
+        },
+        {
+          "name": "profile_comments",
+          "key": {
+            "userId": 1,
+            "createdAt": -1
+          }
+        }
+      ]
+    },
+    "articleInteractions": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "articleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "like",
+                "save"
+              ]
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "userId",
+            "articleId",
+            "kind",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "one_interaction",
+          "key": {
+            "userId": 1,
+            "articleId": 1,
+            "kind": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "profile_library",
+          "key": {
+            "userId": 1,
+            "kind": 1,
+            "createdAt": -1
+          }
+        }
+      ]
+    },
+    "commentLikes": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commentId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "userId",
+            "commentId",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "one_comment_like",
+          "key": {
+            "userId": 1,
+            "commentId": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "shareEvents": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "articleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "channel": {
+              "type": "string"
+            },
+            "occurredAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "articleId",
+            "userId",
+            "channel",
+            "occurredAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "share_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "article_shares",
+          "key": {
+            "articleId": 1,
+            "occurredAt": -1
+          }
+        }
+      ]
+    },
+    "viewEvents": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "articleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deduplicationDigest": {
+              "type": "string",
+              "minLength": 1
+            },
+            "occurredAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "articleId",
+            "deduplicationDigest",
+            "occurredAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "view_digest",
+          "key": {
+            "articleId": 1,
+            "deduplicationDigest": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "sessions": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tokenDigest": {
+              "type": "string",
+              "minLength": 1
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lastSeenAt": {
+              "bsonType": "date"
+            },
+            "idleExpiresAt": {
+              "bsonType": "date"
+            },
+            "expiresAt": {
+              "bsonType": "date"
+            },
+            "revokedAt": {
+              "bsonType": [
+                "date",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "userId",
+            "tokenDigest",
+            "createdAt",
+            "updatedAt",
+            "lastSeenAt",
+            "idleExpiresAt",
+            "expiresAt",
+            "revokedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "session_digest",
+          "key": {
+            "tokenDigest": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "session_expiry",
+          "key": {
+            "expiresAt": 1
+          },
+          "expireAfterSeconds": 0
+        }
+      ]
+    },
+    "policies": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string",
+              "const": "security"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxCommentCharacters": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxCommentsPerWindow": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "commentWindowSeconds": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sessionIdleSeconds": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sessionAbsoluteSeconds": {
+              "anyOf": [
+                {
+                  "bsonType": [
+                    "int",
+                    "long",
+                    "double"
+                  ],
+                  "multipleOf": 1,
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "createdAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "updatedAt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "key",
+            "enabled",
+            "maxCommentCharacters",
+            "maxCommentsPerWindow",
+            "commentWindowSeconds",
+            "sessionIdleSeconds",
+            "sessionAbsoluteSeconds",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "policy_key",
+          "key": {
+            "key": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    "rateLimits": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string"
+            },
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "action": {
+              "type": "string"
+            },
+            "count": {
+              "bsonType": [
+                "int",
+                "long",
+                "double"
+              ],
+              "multipleOf": 1,
+              "minimum": 0
+            },
+            "windowStartedAt": {
+              "bsonType": "date"
+            },
+            "expiresAt": {
+              "bsonType": "date"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "key",
+            "userId",
+            "action",
+            "count",
+            "windowStartedAt",
+            "expiresAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "limit_key",
+          "key": {
+            "key": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "rate_expiry",
+          "key": {
+            "expiresAt": 1
+          },
+          "expireAfterSeconds": 0
+        }
+      ]
+    },
+    "auditEvents": {
+      "validator": {
+        "$jsonSchema": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "bsonType": [
+                "objectId",
+                "string"
+              ]
+            },
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "actorId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "action": {
+              "type": "string"
+            },
+            "targetId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "occurredAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "id",
+            "actorId",
+            "action",
+            "targetId",
+            "occurredAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "validationLevel": "strict",
+      "validationAction": "error",
+      "indexes": [
+        {
+          "name": "audit_time",
+          "key": {
+            "occurredAt": -1
+          }
+        }
+      ]
+    }
+  }
+}

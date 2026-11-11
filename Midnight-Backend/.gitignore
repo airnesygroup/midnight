@@ -1,0 +1,10 @@
+backend/.venv/
+backend/__pycache__/
+backend/.env
+frontend/node_modules/
+frontend/dist/
+
+# Groq key collector (secrets: never commit)
+backend/emails.txt
+backend/groq_keys.csv
+backend/groq_api_keys.txt

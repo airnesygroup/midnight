@@ -1,0 +1,340 @@
+[
+ {
+  "schemaVersion": 1,
+  "id": "section_world",
+  "slug": "world",
+  "name": "World",
+  "desc": "The stories shaping the week, from every corner of the globe.",
+  "tags": [
+   "World"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_tech",
+  "slug": "tech",
+  "name": "Tech",
+  "desc": "Chips, code and the companies behind them.",
+  "tags": [
+   "Technology",
+   "Tech"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_business",
+  "slug": "business",
+  "name": "Business",
+  "desc": "Markets, money and the people moving them.",
+  "tags": [
+   "Business"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_climate",
+  "slug": "climate",
+  "name": "Climate",
+  "desc": "Energy, nature and the race to a cleaner planet.",
+  "tags": [
+   "Climate"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_us",
+  "slug": "us",
+  "name": "US",
+  "desc": "News from across the United States.",
+  "tags": [
+   "US"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_europe",
+  "slug": "europe",
+  "name": "Europe",
+  "desc": "Politics, business and life across Europe.",
+  "tags": [
+   "Europe"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_asia",
+  "slug": "asia",
+  "name": "Asia",
+  "desc": "The stories shaping Asia and the Pacific Rim.",
+  "tags": [
+   "Asia"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_middle-east",
+  "slug": "middle-east",
+  "name": "Middle East",
+  "desc": "Reporting from across the Middle East.",
+  "tags": [
+   "Middle East"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_latin-america",
+  "slug": "latin-america",
+  "name": "Latin America",
+  "desc": "News from Mexico to Patagonia.",
+  "tags": [
+   "Latin America"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_oceania",
+  "slug": "oceania",
+  "name": "Oceania",
+  "desc": "Australia, New Zealand and the Pacific islands.",
+  "tags": [
+   "Oceania"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_opinion",
+  "slug": "opinion",
+  "name": "Opinion",
+  "desc": "Argument and analysis from our columnists.",
+  "tags": [
+   "Opinion"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_sport",
+  "slug": "sport",
+  "name": "Sport",
+  "desc": "Results, rivalries and the science of winning.",
+  "tags": [
+   "Sport"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_culture",
+  "slug": "culture",
+  "name": "Culture",
+  "desc": "Books, film, art and the ideas behind them.",
+  "tags": [
+   "Culture"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_health-and-science",
+  "slug": "health-and-science",
+  "name": "Health & Science",
+  "desc": "Discoveries in medicine, space and the natural world.",
+  "tags": [
+   "Health",
+   "Science"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_health",
+  "slug": "health",
+  "name": "Health",
+  "desc": "Medicine, wellbeing and public health.",
+  "tags": [
+   "Health"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_science",
+  "slug": "science",
+  "name": "Science",
+  "desc": "Space, physics and the frontiers of research.",
+  "tags": [
+   "Science"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_politics",
+  "slug": "politics",
+  "name": "Politics",
+  "desc": "The latest politics news and analysis.",
+  "tags": [
+   "Politics"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_entertainment",
+  "slug": "entertainment",
+  "name": "Entertainment",
+  "desc": "The latest entertainment news and analysis.",
+  "tags": [
+   "Entertainment"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_travel",
+  "slug": "travel",
+  "name": "Travel",
+  "desc": "The latest travel news and analysis.",
+  "tags": [
+   "Travel"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_style",
+  "slug": "style",
+  "name": "Style",
+  "desc": "The latest style news and analysis.",
+  "tags": [
+   "Style"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_food",
+  "slug": "food",
+  "name": "Food",
+  "desc": "The latest food news and analysis.",
+  "tags": [
+   "Food"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_education",
+  "slug": "education",
+  "name": "Education",
+  "desc": "The latest education news and analysis.",
+  "tags": [
+   "Education"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_real-estate",
+  "slug": "real-estate",
+  "name": "Real Estate",
+  "desc": "The latest real estate news and analysis.",
+  "tags": [
+   "Real Estate"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_automotive",
+  "slug": "automotive",
+  "name": "Automotive",
+  "desc": "The latest automotive news and analysis.",
+  "tags": [
+   "Automotive"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_weather",
+  "slug": "weather",
+  "name": "Weather",
+  "desc": "The latest weather news and analysis.",
+  "tags": [
+   "Weather"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_crypto",
+  "slug": "crypto",
+  "name": "Crypto",
+  "desc": "The latest crypto news and analysis.",
+  "tags": [
+   "Crypto"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_gaming",
+  "slug": "gaming",
+  "name": "Gaming",
+  "desc": "The latest gaming news and analysis.",
+  "tags": [
+   "Gaming"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ },
+ {
+  "schemaVersion": 1,
+  "id": "section_africa",
+  "slug": "africa",
+  "name": "Africa",
+  "desc": "The latest africa news and analysis.",
+  "tags": [
+   "Africa"
+  ],
+  "createdAt": null,
+  "updatedAt": null
+ }
+]

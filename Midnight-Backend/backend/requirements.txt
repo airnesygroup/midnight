@@ -1,0 +1,10 @@
+fastapi>=0.115
+uvicorn>=0.30
+requests>=2.32
+beautifulsoup4>=4.12
+lxml>=5.3
+python-dotenv>=1.0
+groq>=1.7
+pymongo[srv]>=4.8
+nh3>=0.2.18
+Pillow>=10.3

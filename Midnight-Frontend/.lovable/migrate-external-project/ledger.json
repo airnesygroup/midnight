@@ -1,0 +1,86 @@
+[
+ {
+  "capability": "code, pages, design, tests",
+  "source": "code archive (TanStack Start, same template revision and pinned versions)",
+  "outcome": "migrate",
+  "status": "verified",
+  "next_action": "none; 68/68 tests pass"
+ },
+ {
+  "capability": "site icons (favicon.ico, icon-192/512, apple-touch-icon)",
+  "source": "missing from archive; regenerated from public/favicon.svg",
+  "outcome": "migrate",
+  "status": "done",
+  "next_action": "none"
+ },
+ {
+  "capability": "database (stories, sections, trends, reports, comments, likes, saves, admin data)",
+  "source": "MongoDB database 'midnight'",
+  "outcome": "preserve MongoDB (user confirmed in this migration)",
+  "status": "verified",
+  "next_action": "none; live stories load in preview"
+ },
+ {
+  "capability": "records",
+  "source": "live MongoDB; no export in archive",
+  "outcome": "no import needed (data stays in MongoDB)",
+  "status": "accepted",
+  "next_action": "none"
+ },
+ {
+  "capability": "reader auth (email + password, MongoDB sessions)",
+  "source": "MongoDB users/userSessions",
+  "outcome": "preserve (MongoDB accounts and sessions)",
+  "status": "pending",
+  "next_action": "sign-up reaches MongoDB but sandbox network hit the daily sign-up limit; verify with a real sign-in"
+ },
+ {
+  "capability": "field encryption of reader data",
+  "source": "COMMUNITY_ENCRYPTION_KEY secret",
+  "outcome": "preserve",
+  "status": "pending",
+  "next_action": "same key value as before"
+ },
+ {
+  "capability": "admin dashboard (/admin)",
+  "source": "MongoDB staff accounts; ADMIN_USERNAME/ADMIN_PASSWORD bootstrap",
+  "outcome": "preserve",
+  "status": "pending",
+  "next_action": "verify /admin sign-in"
+ },
+ {
+  "capability": "Google Analytics + Vercel Analytics",
+  "source": "GOOGLE_ANALYTICS_MEASUREMENT_ID (optional)",
+  "outcome": "preserve",
+  "status": "pending",
+  "next_action": "optional measurement ID"
+ },
+ {
+  "capability": "request protection, sitemap.xml, robots, SEO",
+  "source": "archive",
+  "outcome": "migrate",
+  "status": "done",
+  "next_action": "spot-check pages"
+ },
+ {
+  "capability": "webhooks / cron / external callers",
+  "source": "archive",
+  "outcome": "none detected",
+  "status": "verified",
+  "next_action": "none"
+ },
+ {
+  "capability": "secrets",
+  "source": "MONGODB_URI, COMMUNITY_ENCRYPTION_KEY, ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_EMAIL (optional), GOOGLE_ANALYTICS_MEASUREMENT_ID (optional)",
+  "outcome": "request via secure form",
+  "status": "done",
+  "next_action": "MONGODB_URI and COMMUNITY_ENCRYPTION_KEY saved; GA ID optional"
+ },
+ {
+  "capability": "cutover",
+  "source": "themidnightnews.com",
+  "outcome": "pending",
+  "status": "pending",
+  "next_action": "publish, connect domain"
+ }
+]
