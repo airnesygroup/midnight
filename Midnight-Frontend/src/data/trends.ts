@@ -77,8 +77,9 @@ export const searchTrends = (q: string) => {
   return trends.filter((tr) => `${tr.title} ${tr.hashtags.join(" ")} ${tr.excerpt}`.toLowerCase().includes(t)).sort(byNewest);
 };
 
-export const relatedTrends = (trend: Trend) =>
-  trends.filter((other) => other.slug !== trend.slug && other.hashtags.some((h) => trend.hashtags.includes(h))).sort(byNewest).slice(0, 4);
+export const relatedTrendsOf = (list: readonly Trend[], trend: Trend) =>
+  list.filter((other) => other.slug !== trend.slug && other.hashtags.some((h) => trend.hashtags.includes(h))).sort(byNewest).slice(0, 4);
+export const relatedTrends = (trend: Trend) => relatedTrendsOf(trends, trend);
 
 /** Community data (likes, saves, comments) is namespaced so a trend never shares counters with a news story. */
 export const trendDiscussionSlug = (slug: string) => `trends--${slug}`;

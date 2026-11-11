@@ -2,7 +2,9 @@ import { absUrl } from "@/lib/site";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { BigCard, Spill } from "@/components/cards";
-import { articlesInSection, sections, topNews } from "@/data/news";
+import { addArticles, sections } from "@/data/news";
+import { exploreQuery } from "@/lib/catalogue.functions";
+import { DataUnavailable } from "@/components/data-unavailable";
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -17,18 +19,23 @@ export const Route = createFileRoute("/explore")({
     ],
     links: [{ rel: "canonical", href: absUrl("/explore") }],
   }),
+  // Per-section photo and story count plus the editors' picks, worked out on the server.
+  loader: ({ context }) => context.queryClient.ensureQueryData(exploreQuery),
   component: ExplorePage,
 });
 
 function ExplorePage() {
+  const { tiles, picks, unavailable } = Route.useLoaderData();
+  addArticles(picks);
+  if (unavailable) return <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24"><DataUnavailable /></main>;
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24">
       <h1 className="text-4xl font-extrabold tracking-tight md:text-6xl">Explore</h1>
       <p className="mt-3 text-lg text-muted-foreground">Every section, all in one place.</p>
       <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {sections.map((s) => {
-          const list = articlesInSection(s.slug);
-          const img = list.find((a) => /^(https?:)?\/\//.test(a.img) || a.img.startsWith("/"))?.img;
+          const tile = tiles.find((t) => t.slug === s.slug);
+          const img = tile?.img;
           return (
             <Link key={s.slug} to="/section/$slug" params={{ slug: s.slug }} className="glass-card group relative flex items-center gap-3 overflow-hidden rounded-2xl p-2.5 sm:p-3">
               {img && <Spill img={img} />}
@@ -37,7 +44,7 @@ function ExplorePage() {
               </div>
               <div className="relative min-w-0 flex-1">
                 <p className="truncate text-base font-extrabold">{s.name}</p>
-                <p className="text-xs text-muted-foreground">{list.length || "New"} stories</p>
+                <p className="text-xs text-muted-foreground">{tile?.count || "New"} stories</p>
               </div>
               <ArrowUpRight className="relative h-5 w-5 shrink-0 text-muted-foreground transition group-hover:rotate-45 group-hover:text-foreground" />
             </Link>
@@ -46,7 +53,7 @@ function ExplorePage() {
       </div>
       <h2 className="mt-16 text-3xl font-extrabold">Editors' picks</h2>
       <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {topNews(4).map((s) => (
+        {picks.map((s) => (
           <BigCard key={s.slug} s={s} />
         ))}
       </div>

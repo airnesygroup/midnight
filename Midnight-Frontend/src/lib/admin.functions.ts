@@ -605,5 +605,8 @@ export const adminUpdateMyAccount = createServerFn({ method: "POST" })
 
 export const getSiteStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { loadSettings, DEFAULT_SETTINGS } = await srv();
-  return loadSettings().catch(() => ({ ...DEFAULT_SETTINGS, maintenance_message: "" }));
+  const settings = await loadSettings().catch(() => null);
+  // Identical for every visitor, so the CDN may serve it for a short while (a maintenance switch shows within ~30 s).
+  if (settings) (await import("./cdn-cache.server")).cachePublic(30, 300);
+  return settings ?? { ...DEFAULT_SETTINGS, maintenance_message: "" };
 });

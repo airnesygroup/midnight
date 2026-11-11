@@ -38,21 +38,62 @@ export type Article = {
 };
 
 export type Section = { slug: string; name: string; desc: string; tags: string[] };
-export type Catalogue = { articles: Article[]; sections: Section[]; unavailable?: boolean };
+export type Catalogue = { articles: Article[]; sections: Section[]; unavailable?: boolean; storyCount?: number };
 
+/** The stories the pages open right now have asked for. Pages load only what they show, never the whole catalogue. */
 export let articles: Article[] = [];
 export let sections: Section[] = [];
+/** How many stories are published in total (shown in the search box). */
+export let storyCount = 0;
 /** True when the last catalogue fetch failed (database unreachable). */
 export let catalogueUnavailable = false;
 let bySlug = new Map<string, Article>();
+const known = new Map<string, Article>();
+const stamped = new Map<string, number>();
+/** On the server, a story nobody has loaded for this long is forgotten so unpublished stories cannot linger. */
+const KEEP_MS = 10 * 60_000;
 
+function rebuildIndex() {
+  bySlug = new Map();
+  for (const a of articles) { bySlug.set(a.slug, a); bySlug.set(slugify(a.title), a); }
+}
+
+/** Replaces everything: used by tests and by anything that really has the whole catalogue in hand. */
 export function setCatalogue(c: Catalogue) {
   catalogueUnavailable = !!c.unavailable;
+  storyCount = c.storyCount ?? c.articles.length;
   if (c.articles === articles && c.sections === sections) return;
   articles = c.articles;
   sections = c.sections;
-  bySlug = new Map();
-  for (const a of articles) { bySlug.set(a.slug, a); bySlug.set(slugify(a.title), a); }
+  known.clear();
+  stamped.clear();
+  for (const a of articles) known.set(a.slug, a);
+  rebuildIndex();
+}
+
+/** Site-wide data every page needs: the section menu and the story count. */
+export function setSiteMeta(m: { sections: Section[]; storyCount: number; unavailable: boolean }) {
+  catalogueUnavailable = m.unavailable;
+  storyCount = m.storyCount;
+  sections = m.sections;
+}
+
+/** Adds the stories a page loaded. Safe to call on every render: nothing changes when they are already known. */
+export function addArticles(list: readonly Article[]) {
+  let changed = false;
+  const now = Date.now();
+  for (const a of list) {
+    if (known.get(a.slug) !== a) { known.set(a.slug, a); changed = true; }
+    stamped.set(a.slug, now);
+  }
+  if (typeof window === "undefined") {
+    for (const [slug, at] of stamped) {
+      if (now - at > KEEP_MS) { stamped.delete(slug); known.delete(slug); changed = true; }
+    }
+  }
+  if (!changed) return;
+  articles = [...known.values()];
+  rebuildIndex();
 }
 
 export const footerSections: { heading: string; links: string[] }[] = [
@@ -90,29 +131,38 @@ export type SectionSort = typeof sectionSorts[number];
 /** Trending = views per minute since publication; unknown readership ranks as 0. */
 export const viewsPerMinute = (a: Article, now = Date.now()) => (a.views ?? 0) / Math.max(1, (now - Date.parse(a.publishedAt)) / 60_000);
 const byNewest = (a: Article, b: Article) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt) || a.slug.localeCompare(b.slug);
-/** Newest stories first. */
-export const latestArticles = (n?: number) => [...articles].sort(byNewest).slice(0, n);
+/* The *Of helpers work on any list of stories, so the server can run exactly the same rules on the full catalogue
+   and send each page only the stories it will show. The plain versions below use the stories loaded so far. */
+export const latestOf = (list: readonly Article[], n?: number) => [...list].sort(byNewest).slice(0, n);
 /** Top news: featured stories, else the heaviest editorial weights, newest breaking ties. */
-export const topNews = (n = 5) => {
-  const featured = articles.filter((a) => a.featured);
-  const pool = featured.length >= 3 ? featured : articles;
+export const topNewsOf = (list: readonly Article[], n = 5) => {
+  const featured = list.filter((a) => a.featured);
+  const pool = featured.length >= 3 ? featured : list;
   return [...pool].sort((a, b) => b.headlineWeight - a.headlineWeight || byNewest(a, b)).slice(0, n);
 };
+export const inSectionOf = (list: readonly Article[], secs: readonly Section[], slug: string) => {
+  const sec = secs.find((s) => s.slug === slug);
+  return sec ? list.filter((a) => a.section === sec.slug || (a.sections?.includes(sec.slug) ?? false) || sec.tags.includes(a.tag)).sort(byNewest) : [];
+};
+export const relatedOf = (list: readonly Article[], secs: readonly Section[], article: Article) =>
+  inSectionOf(list, secs, article.section).filter((other) => other.slug !== article.slug).slice(0, 4);
+export const searchOf = (list: readonly Article[], q: string) => {
+  const t = q.trim().toLowerCase();
+  if (!t) return [];
+  return list.filter((a) => `${a.title} ${a.tag} ${a.desk} ${a.excerpt}`.toLowerCase().includes(t)).sort(byNewest);
+};
+
+/** Newest stories first. */
+export const latestArticles = (n?: number) => latestOf(articles, n);
+export const topNews = (n = 5) => topNewsOf(articles, n);
 export function sortSectionArticles(list: Article[], sort: SectionSort, now = Date.now()): Article[] {
   const value = (a: Article) => sort === "popular" ? (a.views ?? 0) : sort === "trending" ? viewsPerMinute(a, now) : Date.parse(a.publishedAt);
   const dir = sort === "oldest" ? 1 : -1;
   return [...list].sort((a, b) => dir * (value(a) - value(b)) || a.slug.localeCompare(b.slug));
 }
-export const articlesInSection = (slug: string) => {
-  const sec = getSection(slug);
-  return sec ? articles.filter((a) => a.section === sec.slug || (a.sections?.includes(sec.slug) ?? false) || sec.tags.includes(a.tag)).sort(byNewest) : [];
-};
-export const relatedArticles = (article: Article) => articlesInSection(article.section).filter((other) => other.slug !== article.slug).slice(0, 4);
-export const searchArticles = (q: string) => {
-  const t = q.trim().toLowerCase();
-  if (!t) return [];
-  return articles.filter((a) => `${a.title} ${a.tag} ${a.desk} ${a.excerpt}`.toLowerCase().includes(t)).sort(byNewest);
-};
+export const articlesInSection = (slug: string) => inSectionOf(articles, sections, slug);
+export const relatedArticles = (article: Article) => relatedOf(articles, sections, article);
+export const searchArticles = (q: string) => searchOf(articles, q);
 
 export type InfoPageSection = { heading: string; body?: string[]; bullets?: string[] };
 export type InfoPage = {

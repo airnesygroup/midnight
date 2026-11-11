@@ -6,20 +6,21 @@ import { useImagePalette } from "@/hooks/use-image-palette";
 import { ThumbRow } from "@/components/cards";
 import { JumpArrow } from "@/components/jump-arrow";
 import { ArticleActions, Discussion, discussionQuery } from "@/components/article-community";
-import { type Article, catalogueUnavailable, formatPublishedShort, getArticle, getSection, latestArticles, relatedArticles } from "@/data/news";
-import { articleBodyQuery } from "@/lib/catalogue.functions";
+import { type Article, addArticles, formatPublishedShort, getSection } from "@/data/news";
+import { articleDetailQuery } from "@/lib/catalogue.functions";
 
 export const Route = createFileRoute("/article/$slug")({
   loader: async ({ params, context }) => {
-    const found = getArticle(params.slug);
+    // One request brings the story, its text and the few stories shown under it (not the whole catalogue).
+    const detail = await context.queryClient.ensureQueryData(articleDetailQuery(params.slug));
+    const found = detail.article;
     if (!found) {
-      if (catalogueUnavailable) return { article: null, bodyUnavailable: true };
+      if (detail.catalogueUnavailable) return { article: null, bodyUnavailable: true, related: [] as Article[], latest: [] as Article[] };
       throw notFound();
     }
     // Comments load in parallel with the story text (browser navigation only).
     if (typeof window !== "undefined") void context.queryClient.prefetchQuery(discussionQuery(found.slug));
-    const { body, unavailable } = await context.queryClient.ensureQueryData(articleBodyQuery(found.slug));
-    return { article: { ...found, body: body ?? [] }, bodyUnavailable: unavailable };
+    return { article: { ...found, body: detail.body ?? [], summary: detail.summary }, bodyUnavailable: detail.bodyUnavailable, related: detail.related, latest: detail.latest };
   },
   head: ({ loaderData, params }) => {
     const a = loaderData?.article;
@@ -62,16 +63,15 @@ export const Route = createFileRoute("/article/$slug")({
 });
 
 function ArticlePage() {
-  const { article, bodyUnavailable } = Route.useLoaderData();
+  const { article, bodyUnavailable, related, latest } = Route.useLoaderData();
   if (!article) return <main className="mx-auto max-w-7xl px-4 pb-24" />;
-  return <ArticleView a={article} bodyUnavailable={!!bodyUnavailable} />;
+  // Cards below the story look their stories up by headline, so make them known.
+  addArticles([article, ...related, ...latest]);
+  return <ArticleView a={article} bodyUnavailable={!!bodyUnavailable} related={related} latest={latest} />;
 }
 
-function ArticleView({ a, bodyUnavailable }: { a: Article; bodyUnavailable: boolean }) {
+function ArticleView({ a, bodyUnavailable, related, latest }: { a: Article; bodyUnavailable: boolean; related: Article[]; latest: Article[] }) {
   const section = getSection(a.section);
-  const related = relatedArticles(a);
-  const seen = new Set([a.slug, ...related.map((r) => r.slug)]);
-  const latest = latestArticles(12).filter((r) => !seen.has(r.slug)).slice(0, 4);
   useImagePalette(a.img);
   const [view, setView] = useState<"full" | "summary">("full");
 

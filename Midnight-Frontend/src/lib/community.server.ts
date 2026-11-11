@@ -3,19 +3,27 @@ import { MongoClient, type Db } from "mongodb";
 // Server-only: MongoDB access and field encryption for community data.
 const DB_NAME = "midnight";
 
+// One shared client per server instance. Vercel (Fluid compute) keeps an instance alive and
+// reuses it across requests, so DNS + TLS + auth happen once instead of on every call. That
+// handshake was the bulk of this site's Active CPU time.
+const shared = globalThis as unknown as { __midnightMongo: Promise<MongoClient> | undefined };
+
+function sharedClient(uri: string): Promise<MongoClient> {
+  shared.__midnightMongo ??= new MongoClient(uri, { serverSelectionTimeoutMS: 8000, maxPoolSize: 5, maxIdleTimeMS: 30_000 })
+    .connect()
+    .catch((e: unknown) => {
+      shared.__midnightMongo = undefined; // let the next request retry instead of caching the failure
+      throw e;
+    });
+  return shared.__midnightMongo;
+}
+
 export async function withDb<T>(fn: (db: Db) => Promise<T>): Promise<T> {
   const uri = process.env["MONGODB_URI"];
   if (!uri) throw new Error("Community storage is not configured");
-  // One client per request: the edge runtime cannot share sockets across requests.
-  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 8000, maxPoolSize: 1 });
-  try {
-    await client.connect();
-    const db = client.db(DB_NAME);
-    await ensureIndexes(db);
-    return await fn(db);
-  } finally {
-    await client.close().catch(() => {});
-  }
+  const db = (await sharedClient(uri)).db(DB_NAME);
+  await ensureIndexes(db);
+  return fn(db);
 }
 
 let indexesReady = false;

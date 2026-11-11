@@ -5,10 +5,16 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { z } from "zod";
 import { ThumbRow } from "@/components/cards";
-import { searchArticles } from "@/data/news";
+import { addArticles, type Article } from "@/data/news";
+import { searchQuery } from "@/lib/catalogue.functions";
+import { DataUnavailable } from "@/components/data-unavailable";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s) => z.object({ q: z.string().optional() }).parse({ q: typeof s["q"] === "string" ? s["q"] : undefined }),
+  loaderDeps: ({ search }) => ({ q: search.q?.trim() ?? "" }),
+  // The server searches every story and sends back only the matches.
+  loader: ({ deps, context }) =>
+    deps.q ? context.queryClient.ensureQueryData(searchQuery(deps.q)) : Promise.resolve({ results: [] as Article[], total: 0, unavailable: false }),
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, follow" },
@@ -29,7 +35,8 @@ function SearchPage() {
   const { q = "" } = Route.useSearch();
   const navigate = useNavigate();
   const [value, setValue] = useState(q);
-  const results = searchArticles(q);
+  const { results, total, unavailable } = Route.useLoaderData();
+  addArticles(results);
 
   return (
     <main className="mx-auto max-w-4xl px-4 pt-28 pb-24">
@@ -46,10 +53,11 @@ function SearchPage() {
         <button className="shrink-0 rounded-full bg-primary px-6 py-3 font-bold text-primary-foreground">Search</button>
       </form>
       <p className="mt-6 text-sm text-muted-foreground">
-        {q ? `${results.length} ${results.length === 1 ? "result" : "results"} for “${q}”` : "Type something to search every story."}
+        {q ? `${total} ${total === 1 ? "result" : "results"} for “${q}”` : "Type something to search every story."}
       </p>
       <div className="mt-4 space-y-3">
-        {q && results.length === 0 && <EmptyCard icon="search" text={`No stories match “${q}”. Try another word.`} />}
+        {q && unavailable && <DataUnavailable />}
+        {q && !unavailable && results.length === 0 && <EmptyCard icon="search" text={`No stories match “${q}”. Try another word.`} />}
         {results.map((a) => (
           <ThumbRow key={a.slug} s={a} />
         ))}

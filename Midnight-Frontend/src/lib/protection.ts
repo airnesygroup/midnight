@@ -107,7 +107,7 @@ export function cacheControlFor(pathname: string, contentType: string): string |
   if (/\.(png|jpe?g|webp|avif|svg|ico|woff2?)$/i.test(pathname)) return "public, max-age=86400, stale-while-revalidate=604800";
   if (PRIVATE_PATHS.test(pathname)) return "private, no-store";
   if (pathname === "/sitemap.xml" || pathname === "/robots.txt") return "public, max-age=3600";
-  if (contentType.includes("text/html")) return "public, max-age=0, s-maxage=60, stale-while-revalidate=300";
+  if (contentType.includes("text/html")) return "public, max-age=0, s-maxage=300, stale-while-revalidate=3600";
   return null;
 }
 

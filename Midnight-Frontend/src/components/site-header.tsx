@@ -5,7 +5,8 @@ import { PageLock } from "@/components/page-lock";
 import { useHoverMenu } from "@/hooks/use-hover-menu";
 import { AccountButton } from "@/components/account-button";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { articles, navigationSections, searchArticles, slugify } from "@/data/news";
+import { navigationSections, slugify, storyCount } from "@/data/news";
+import { useStorySearch } from "@/lib/story-search";
 import { ChevronDown, Search, X } from "lucide-react";
 import {
   DropdownMenu,
@@ -127,7 +128,7 @@ export function SiteHeader() {
 
   const needsBurger = !cfg.strip || !cfg.more;
   const q = query.trim().toLowerCase();
-  const results = searchArticles(q).slice(0, 8);
+  const { results, searching } = useStorySearch(q);
   const submit = () => {
     if (!q) return;
     setSearchOpen(false);
@@ -255,8 +256,8 @@ export function SiteHeader() {
             )}
           </div>
           <div className="mt-2 max-h-[60dvh] overflow-y-auto">
-            {!q && <p className="px-4 py-3 text-sm text-muted-foreground">Start typing to search {articles.length} stories. Press Enter for all results.</p>}
-            {q && results.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">No stories match “{query}”.</p>}
+            {!q && <p className="px-4 py-3 text-sm text-muted-foreground">Start typing to search {storyCount} stories. Press Enter for all results.</p>}
+            {q && !searching && results.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">No stories match “{query}”.</p>}
             {results.map((r) => (
               <Link
                 key={r.slug}

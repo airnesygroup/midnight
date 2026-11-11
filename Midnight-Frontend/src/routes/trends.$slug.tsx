@@ -7,19 +7,18 @@ import { TrendThumbRow } from "@/components/trend-cards";
 import { JumpArrow } from "@/components/jump-arrow";
 import { ArticleActions, Discussion, discussionQuery } from "@/components/article-community";
 import { formatPublishedShort } from "@/data/news";
-import { getTrend, relatedTrends, setTrends, trendDiscussionSlug, type Trend } from "@/data/trends";
-import { trendBodyQuery, trendsQuery } from "@/lib/trends.functions";
+import { trendDiscussionSlug, type Trend } from "@/data/trends";
+import { trendDetailQuery } from "@/lib/trends.functions";
 
 export const Route = createFileRoute("/trends/$slug")({
   loader: async ({ params, context }) => {
-    const all = (await context.queryClient.ensureQueryData(trendsQuery)).trends;
-    setTrends(all);
-    const found = getTrend(params.slug);
+    // One request brings the trend, its text and the few related trends (not the whole list).
+    const detail = await context.queryClient.ensureQueryData(trendDetailQuery(params.slug));
+    const found = detail.trend;
     if (!found) throw notFound();
     // Comments load in parallel with the trend text (browser navigation only).
     if (typeof window !== "undefined") void context.queryClient.prefetchQuery(discussionQuery(trendDiscussionSlug(found.slug)));
-    const { body, unavailable } = await context.queryClient.ensureQueryData(trendBodyQuery(found.slug));
-    return { trend: { ...found, body: body ?? [] }, bodyUnavailable: unavailable, all };
+    return { trend: { ...found, body: detail.body ?? [], summary: detail.summary }, bodyUnavailable: detail.bodyUnavailable, related: detail.related };
   },
   head: ({ loaderData, params }) => {
     const t = loaderData?.trend;
@@ -62,13 +61,11 @@ export const Route = createFileRoute("/trends/$slug")({
 });
 
 function TrendPage() {
-  const { trend, bodyUnavailable, all } = Route.useLoaderData();
-  setTrends(all);
-  return <TrendView t={trend} bodyUnavailable={!!bodyUnavailable} />;
+  const { trend, bodyUnavailable, related } = Route.useLoaderData();
+  return <TrendView t={trend} bodyUnavailable={!!bodyUnavailable} related={related} />;
 }
 
-function TrendView({ t, bodyUnavailable }: { t: Trend; bodyUnavailable: boolean }) {
-  const related = relatedTrends(t);
+function TrendView({ t, bodyUnavailable, related }: { t: Trend; bodyUnavailable: boolean; related: Trend[] }) {
   const discussionSlug = trendDiscussionSlug(t.slug);
   useImagePalette(t.img);
   const [view, setView] = useState<"full" | "summary">("full");

@@ -6,7 +6,8 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MidnightLogo } from "@/components/news-bits";
-import { articles, searchArticles } from "@/data/news";
+import { storyCount } from "@/data/news";
+import { useStorySearch } from "@/lib/story-search";
 import { searchTrends, trends } from "@/data/trends";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -41,9 +42,10 @@ export function CompactHeader() {
   const q = query.trim().toLowerCase();
   // Inside Midnight Trends the search only ever looks at trends; elsewhere it only sees news.
   const inTrends = useRouterState({ select: (st) => st.location.pathname === "/trends" || st.location.pathname.startsWith("/trends/") });
+  const stories = useStorySearch(q, !inTrends);
   const results = !q ? [] : inTrends
     ? searchTrends(q).slice(0, 8).map((t) => ({ slug: t.slug, title: t.title, tag: `#${t.hashtags[0] ?? "Trending"}` }))
-    : searchArticles(q).slice(0, 8);
+    : stories.results;
   const submit = () => {
     if (!q) return;
     setOpen(false);
@@ -105,8 +107,8 @@ export function CompactHeader() {
               )}
             </div>
             <div className="mt-2 max-h-[60dvh] overflow-y-auto">
-              {!q && <p className="px-4 py-3 text-sm text-muted-foreground">Start typing to search {inTrends ? `${trends.length} trends` : `${articles.length} stories`}. Press Enter for all results.</p>}
-              {q && results.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">{inTrends ? "No trends match" : "No stories match"} “{query}”.</p>}
+              {!q && <p className="px-4 py-3 text-sm text-muted-foreground">Start typing to search {inTrends ? `${trends.length} trends` : `${storyCount} stories`}. Press Enter for all results.</p>}
+              {q && !(stories.searching) && results.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">{inTrends ? "No trends match" : "No stories match"} “{query}”.</p>}
               {results.map((r) => (
                 <Link key={r.slug} to={inTrends ? "/trends/$slug" : "/article/$slug"} params={{ slug: r.slug }} onClick={() => setOpen(false)}
                   className="flex w-full min-w-0 items-center gap-3 rounded-2xl px-4 py-2.5 text-left hover:bg-navigation-highlight">

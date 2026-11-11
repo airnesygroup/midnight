@@ -21,8 +21,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { CompactHeader } from "@/components/compact-header";
 import { ColorGlow } from "@/components/color-glow";
 import appCss from "../styles.css?url";
-import { catalogueQuery } from "@/lib/catalogue.functions";
-import { setCatalogue } from "@/data/news";
+import { siteMetaQuery } from "@/lib/catalogue.functions";
+import { setSiteMeta } from "@/data/news";
 import { setTrends } from "@/data/trends";
 import { trendsQuery } from "@/lib/trends.functions";
 import { DataUnavailable } from "@/components/data-unavailable";
@@ -126,11 +126,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
   }),
   beforeLoad: async ({ context, location }) => {
-    setCatalogue(await context.queryClient.ensureQueryData(catalogueQuery));
+    setSiteMeta(await context.queryClient.ensureQueryData(siteMetaQuery));
     // Trends load only inside the Trends section, so they never reach news pages or search.
     if (isTrendsPath(location.pathname)) setTrends((await context.queryClient.ensureQueryData(trendsQuery)).trends);
   },
-  loader: ({ context }) => context.queryClient.ensureQueryData(catalogueQuery),
+  loader: ({ context }) => context.queryClient.ensureQueryData(siteMetaQuery),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -157,7 +157,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const catalogue = Route.useLoaderData();
-  setCatalogue(catalogue);
+  setSiteMeta(catalogue);
+  // The page HTML already carries the site data; seed the browser cache so the first click
+  // does not download it a second time.
+  if (typeof window !== "undefined" && !catalogue.unavailable && !queryClient.getQueryData(siteMetaQuery.queryKey)) {
+    queryClient.setQueryData(siteMetaQuery.queryKey, catalogue);
+  }
   useEffect(() => installImageFallback(), []);
   const pathname = useRouterState({ select: (st) => st.location.pathname });
   const { data: trendData } = useQuery({ ...trendsQuery, enabled: isTrendsPath(pathname) }, queryClient);

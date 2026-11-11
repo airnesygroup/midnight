@@ -8,13 +8,17 @@ import { emptyPublicationDate, filterByPublicationDate, hasPublicationDate } fro
 
 const SORTS = [["latest", "Latest"], ["oldest", "Oldest"], ["popular", "Popular"], ["trending", "Trending"]] as const;
 import { ArrowUpRight, Newspaper } from "lucide-react";
-import { articlesInSection, getSection, sortSectionArticles, type SectionSort } from "@/data/news";
+import { addArticles, getSection, sortSectionArticles, type SectionSort } from "@/data/news";
+import { sectionQuery } from "@/lib/catalogue.functions";
+import { DataUnavailable } from "@/components/data-unavailable";
 
 export const Route = createFileRoute("/section/$slug")({
-  loader: ({ params }) => {
+  loader: async ({ params, context }) => {
     const section = getSection(params.slug);
     if (!section) throw notFound();
-    return { section };
+    // Only this section's stories are fetched (not the whole catalogue).
+    const { stories, unavailable } = await context.queryClient.ensureQueryData(sectionQuery(section.slug));
+    return { section, stories, unavailable };
   },
   head: ({ loaderData, params }) => {
     const s = loaderData?.section;
@@ -43,10 +47,12 @@ export const Route = createFileRoute("/section/$slug")({
 });
 
 function SectionPage() {
-  const { section } = Route.useLoaderData();
+  const { section, stories, unavailable } = Route.useLoaderData();
+  addArticles(stories);
   const [sort, setSort] = useState<SectionSort>("latest");
   const [date, setDate] = useState(emptyPublicationDate);
-  const all = articlesInSection(section.slug);
+  const all = stories;
+  if (unavailable) return <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24"><DataUnavailable /></main>;
   const list = sortSectionArticles(filterByPublicationDate(all, date), sort);
   const [top, ...rest] = list;
 

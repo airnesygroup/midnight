@@ -4,11 +4,12 @@ import { TopNewsHero } from "@/components/featured-news";
 import { Button } from "@/components/ui/button";
 import { BigCard, SectionHeader, ThumbRow } from "@/components/cards";
 import { EmptyCard } from "@/components/states";
-import { articlesInSection, latestArticles, topNews, type Article } from "@/data/news";
-import { createHomepageSelection } from "@/lib/homepage-selection";
+import { addArticles, articles, sections, type Article } from "@/data/news";
+import { buildHome, HOME_COUNTS } from "@/lib/home-picks";
+import { homeQuery } from "@/lib/catalogue.functions";
+import { DataUnavailable } from "@/components/data-unavailable";
 
-/* Home-page maximums per block; blocks show fewer when the database has fewer stories. */
-export const HOME_COUNTS = { ticker: 6, latest: 6, world: 5, politicsTop: 3, politics: 8, editors: 4, categoryTop: 3, categoryColumn: 6, tech: 15, business: 15, climate: 15, sport: 15, culture: 15, healthScience: 15, food: 15, travel: 15, style: 15, entertainment: 15, opinion: 4 } as const;
+export { HOME_COUNTS };
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,21 +24,17 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "canonical", href: absUrl("/") }],
   }),
+  // Only the stories this page shows are fetched (not the whole catalogue).
+  loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery),
   component: Index,
 });
 
 function Index() {
   const C = HOME_COUNTS;
-  const tickerStories = latestArticles(C.ticker);
-  const select = createHomepageSelection(topNews());
-  const editorsPicks = select([...latestArticles()].sort((a, b) => b.headlineWeight - a.headlineWeight), C.editors);
-  const latest = select(latestArticles(), C.latest);
-  const pick = (slug: string, n: number) => select(articlesInSection(slug), n);
-  const world = pick("world", C.world), politicsNews = pick("politics", C.politics), technology = pick("tech", C.tech);
-  const businessNews = pick("business", C.business), climateNews = pick("climate", C.climate), sportNews = pick("sport", C.sport);
-  const cultureNews = pick("culture", C.culture), healthScience = pick("health-and-science", C.healthScience);
-  const foodNews = pick("food", C.food), travelNews = pick("travel", C.travel), styleNews = pick("style", C.style), entertainmentNews = pick("entertainment", C.entertainment);
-  const opinion = pick("opinion", C.opinion);
+  const { stories, unavailable } = Route.useLoaderData();
+  addArticles(stories);
+  if (unavailable) return <main className="mx-auto max-w-7xl px-4 pt-28 pb-24"><DataUnavailable /></main>;
+  const { ticker: tickerStories, editors: editorsPicks, latest, world, politics: politicsNews, tech: technology, business: businessNews, climate: climateNews, sport: sportNews, culture: cultureNews, healthScience, food: foodNews, travel: travelNews, style: styleNews, entertainment: entertainmentNews, opinion } = buildHome(articles, sections);
   const show = (list: Article[]) => list.length > 0;
   return (
     <>

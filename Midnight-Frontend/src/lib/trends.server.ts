@@ -1,22 +1,24 @@
 import type { Document } from "mongodb";
 import { withDb } from "./community.server";
-import type { Trend } from "@/data/trends";
+import { relatedTrendsOf, type Trend } from "@/data/trends";
+import { slugify } from "@/data/news";
 
 const str = (v: unknown, d = "") => (typeof v === "string" ? v : d);
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : typeof v === "string" ? v : new Date(0).toISOString());
 
-export function toTrend(d: Document, withBody = false): Trend {
+/** `slim` leaves out fields no listing shows (summary, subtitle, source links) so the trends list stays small. */
+export function toTrend(d: Document, withBody = false, slim = false): Trend {
   const readingMinutes = num(d["readingMinutes"]) ?? 3;
   return {
     id: str(d["id"], String(d["_id"])),
     slug: str(d["slug"]),
     title: str(d["title"]),
-    subtitle: str(d["subtitle"]),
+    subtitle: slim ? "" : str(d["subtitle"]),
     excerpt: str(d["excerpt"]),
     body: withBody ? strs(d["body"]) : [],
-    summary: strs(d["summary"]),
+    summary: slim ? [] : strs(d["summary"]),
     hashtags: strs(d["hashtags"]),
     img: str(d["img"]),
     imageAlt: str(d["imageAlt"], str(d["title"])),
@@ -28,8 +30,8 @@ export function toTrend(d: Document, withBody = false): Trend {
     shares: num(d["shares"]),
     headlineWeight: num(d["headlineWeight"]) ?? 0,
     featured: d["featured"] === true,
-    sourceName: typeof d["source_name"] === "string" ? d["source_name"] : null,
-    sourceUrl: typeof d["source_url"] === "string" ? d["source_url"] : null,
+    sourceName: !slim && typeof d["source_name"] === "string" ? d["source_name"] : null,
+    sourceUrl: !slim && typeof d["source_url"] === "string" ? d["source_url"] : null,
   };
 }
 
@@ -55,16 +57,17 @@ export async function loadTrends(): Promise<Trend[]> {
   return refreshTrends();
 }
 
-const bodyCache = new Map<string, { at: number; value: string[] | null }>();
+export type TrendText = { body: string[]; summary: string[] };
+const bodyCache = new Map<string, { at: number; value: TrendText | null }>();
 
 async function fetchTrends(): Promise<Trend[]> {
   return withDb(async (db) => {
-    const docs = await db.collection("trends").find(PUBLISHED, { projection: { body: 0, html_body: 0 } }).sort({ publishedAt: -1 }).limit(1000).toArray();
-    return docs.map((d) => toTrend(d)).filter((t) => t.slug && t.title);
+    const docs = await db.collection("trends").find(PUBLISHED, { projection: { body: 0, html_body: 0, summary: 0, subtitle: 0, source_url: 0, source_name: 0 } }).sort({ publishedAt: -1 }).limit(1000).toArray();
+    return docs.map((d) => toTrend(d, false, true)).filter((t) => t.slug && t.title);
   });
 }
 
-export async function loadTrendBody(slug: string): Promise<string[] | null> {
+export async function loadTrendBody(slug: string): Promise<TrendText | null> {
   const hit = bodyCache.get(slug);
   if (hit && Date.now() - hit.at < MAX_STALE_MS) return hit.value;
   const value = await fetchTrendBody(slug);
@@ -73,11 +76,18 @@ export async function loadTrendBody(slug: string): Promise<string[] | null> {
   return value;
 }
 
-async function fetchTrendBody(slug: string): Promise<string[] | null> {
+async function fetchTrendBody(slug: string): Promise<TrendText | null> {
   return withDb(async (db) => {
-    const d = await db.collection("trends").findOne({ ...PUBLISHED, slug }, { projection: { body: 1 } });
-    return d ? strs(d["body"]) : null;
+    const d = await db.collection("trends").findOne({ ...PUBLISHED, slug }, { projection: { body: 1, summary: 1 } });
+    return d ? { body: strs(d["body"]), summary: strs(d["summary"]) } : null;
   });
+}
+
+/** One trend plus the few "more trends like this" shown under it, so the page never carries the whole list. */
+export async function loadTrendDetail(slug: string) {
+  const all = await loadTrends();
+  const trend = all.find((t) => t.slug === slug) ?? all.find((t) => slugify(t.title) === slug) ?? null;
+  return trend ? { trend, related: relatedTrendsOf(all, trend) } : null;
 }
 
 /** Drops this isolate's cached trends and bodies so new generated trends show on the next request. */

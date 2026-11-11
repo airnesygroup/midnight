@@ -47,6 +47,15 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 function withProtectionHeaders(request: Request, response: Response): Response {
   const res = new Response(response.body, response);
+  // Public server functions mark their answers cacheable (see lib/cdn-cache.server.ts). Only a browser request
+  // to /_serverFn may turn that into a Cache-Control header; on a page render the marker is simply dropped.
+  const ttl = res.headers.get("x-cdn-ttl");
+  if (ttl !== null) {
+    res.headers.delete("x-cdn-ttl");
+    if (request.method === "GET" && res.status === 200 && !res.headers.has("set-cookie") && new URL(request.url).pathname.startsWith("/_serverFn")) {
+      res.headers.set("cache-control", ttl);
+    }
+  }
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!res.headers.has(k)) res.headers.set(k, v);
   if (res.status === 200 && request.method === "GET" && !res.headers.has("cache-control") && !res.headers.has("set-cookie")) {
     const cc = cacheControlFor(new URL(request.url).pathname, res.headers.get("content-type") ?? "");

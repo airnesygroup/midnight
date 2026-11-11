@@ -1,14 +1,10 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /search
+Disallow: /admin
+Disallow: /auth
+Disallow: /profile
+Disallow: /_serverFn
+Disallow: /api
+
+Sitemap: https://themidnightnews.com/sitemap.xml

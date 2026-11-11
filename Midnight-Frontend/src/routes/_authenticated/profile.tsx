@@ -12,7 +12,8 @@ import { PasswordField } from "@/components/password-field";
 import { UserAvatar } from "@/components/account-button";
 import { Spill } from "@/components/cards";
 import { useAuth } from "@/hooks/use-auth";
-import { getArticle } from "@/data/news";
+import { addArticles, getArticle } from "@/data/news";
+import { getStoriesBySlugs } from "@/lib/catalogue.functions";
 import { deleteMyAccount, getMyLibrary, getMyProfile, updateMyProfile } from "@/lib/community.functions";
 import { LIMITS, bioSchema, displayNameSchema, passwordError, usernameSchema, type FormErrors, fieldError } from "@/lib/community-rules";
 
@@ -43,6 +44,15 @@ function ProfilePage() {
   const profile = useQuery(profileQuery);
   const library = useQuery(libraryQuery);
   const [tab, setTab] = useState<"saved" | "liked" | "comments" | "settings">("saved");
+  // Saved, liked and commented items are shown with their story, so fetch exactly those stories.
+  const lib = library.data;
+  const wanted = lib ? [...new Set([...lib.saved, ...lib.liked, ...lib.comments].map((i) => i.slug))] : [];
+  const stories = useQuery({
+    queryKey: ["me", "library-stories", wanted.join("|")],
+    queryFn: () => getStoriesBySlugs({ data: { slugs: wanted } }),
+    enabled: wanted.length > 0,
+  });
+  if (stories.data) addArticles(stories.data.stories);
 
   if (profile.isError) return <main className="mx-auto max-w-3xl flex-1 px-4 pt-36 pb-24 text-center"><h1 className="font-serif text-4xl">We couldn't load your profile</h1><p className="mt-3 text-muted-foreground">Please try again in a moment.</p><Button className="mt-6 rounded-full" onClick={() => profile.refetch()}>Try again</Button></main>;
   if (!profile.data) return <main className="grid flex-1 place-items-center pt-36 pb-24"><Loader size="lg" label="Loading" /></main>;
@@ -88,7 +98,7 @@ function ProfilePage() {
 
       <div className="mt-6">
         {tab === "settings" ? <Settings profile={p} email={user?.email ?? ""} onSignOut={signOut} /> :
-          !library.data ? <div className="grid place-items-center py-16"><Loader label="Loading" /></div> :
+          !library.data || (wanted.length > 0 && !stories.data && !stories.isError) ? <div className="grid place-items-center py-16"><Loader label="Loading" /></div> :
           tab === "comments" ? <CommentList items={library.data.comments} /> :
           <StoryList kind={tab} items={tab === "saved" ? library.data.saved : library.data.liked} empty={tab === "saved" ? "Stories you save will appear here." : "Stories you like will appear here."} />}
       </div>
