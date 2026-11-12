@@ -66,7 +66,7 @@ export function ThumbRow({ s: story, ago, tall, large, fill }: { s: Card; ago?: 
         <p className="mt-0.5 truncate text-xs text-muted-foreground">{ago ? s.time : `${published ? `${published} · ` : ""}${s.time} read`}</p>
       </div>
       <IconTip label="Read full article">
-        <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full hover:bg-secondary">
+        <span className="relative hidden h-8 w-8 shrink-0 place-items-center rounded-full hover:bg-secondary sm:grid">
           <ArrowUpRight className="h-4 w-4 text-muted-foreground transition group-hover:rotate-45 group-hover:text-foreground sm:h-5 sm:w-5" />
         </span>
       </IconTip>
