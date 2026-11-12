@@ -2,6 +2,7 @@ import { getCookie, setCookie, deleteCookie, getRequestHeader } from "@tanstack/
 import type { Db } from "mongodb";
 import { withDb } from "./community.server";
 import { hashPassword, randomToken, sha256, verifyPassword } from "./password.server";
+import { dateMatch } from "./reader-analysis";
 
 // Server-only: admin accounts, sessions (httpOnly cookie → hashed token), audit log and site settings, all in MongoDB.
 export const ADMIN_COOKIE = "mn_admin";
@@ -148,9 +149,8 @@ export type Stats = {
   hours: { hour: number; views: number }[];
 };
 
-export async function viewStats(days: number, slug?: string | null): Promise<Stats> {
-  const d = Math.max(1, Math.min(days, 365));
-  const match: Record<string, unknown> = { createdAt: { $gte: new Date(Date.now() - d * 86_400_000) } };
+export async function viewStats(days: number | null, slug?: string | null): Promise<Stats> {
+  const match: Record<string, unknown> = dateMatch("createdAt", days);
   if (slug) match["articleSlug"] = slug;
   const today = new Date(); today.setUTCHours(0, 0, 0, 0);
   const grp = (key: unknown, limit?: number) => [

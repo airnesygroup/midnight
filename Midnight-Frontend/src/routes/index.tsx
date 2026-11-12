@@ -33,14 +33,14 @@ function Index() {
   const C = HOME_COUNTS;
   const { stories, unavailable } = Route.useLoaderData();
   addArticles(stories);
-  if (unavailable) return <main className="mx-auto max-w-7xl px-4 pt-28 pb-24"><DataUnavailable /></main>;
+  if (unavailable) return <main className="site-container pt-28 pb-24"><DataUnavailable /></main>;
   const { ticker: tickerStories, editors: editorsPicks, latest, world, politics: politicsNews, tech: technology, business: businessNews, climate: climateNews, sport: sportNews, culture: cultureNews, healthScience, food: foodNews, travel: travelNews, style: styleNews, entertainment: entertainmentNews, opinion } = buildHome(articles, sections);
   const show = (list: Article[]) => list.length > 0;
   return (
     <>
 
       {/* Ticker */}
-      <div className="mx-auto max-w-7xl px-4 pt-28">
+      <div className="site-container pt-28">
         <div className="glass flex items-center overflow-hidden rounded-full px-4 py-2">
           <span className="live-badge relative z-10 flex shrink-0 items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
             <span className="h-2 w-2 animate-pulse rounded-full bg-live" /> Live
@@ -61,7 +61,7 @@ function Index() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl space-y-16 px-4 pt-8 pb-24">
+      <main className="site-container space-y-16 pt-8 pb-24">
         <TopNewsHero />
 
         {/* Editors' picks: directly after the hero's featured articles. */}

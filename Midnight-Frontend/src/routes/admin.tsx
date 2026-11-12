@@ -1,3 +1,4 @@
+import { MidnightLogo } from "@/components/news-bits";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
@@ -20,9 +21,12 @@ import {
   adminSaveArticle, adminSetArticleStatus, adminBulkArticles, adminCommunityTotals, adminListComments, adminRemoveComment, adminListReaders,
   adminSetMemberBlocked, adminDeleteMember, adminSecurity, adminUpdateSettings, adminRevokeSession,
   adminListTeam, adminActivityLog, adminReaderActivity, adminCreateEditor, adminUpdateTeamMember, adminUpdateMyAccount,
+  adminVisitorAnalysis,
 } from "@/lib/admin.functions";
 import { gaIdQuery } from "@/lib/analytics.functions";
 import { matchesQuery, withinDays } from "@/lib/admin-filters";
+import { daysLabel } from "@/lib/admin-filters";
+import { readerClass } from "@/lib/reader-analysis";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -68,7 +72,7 @@ function Login() {
   return (
     <Shell>
       <main className="relative z-10 mx-auto flex w-full max-w-md flex-col px-4 pt-32 pb-24">
-        <a href="/" className="auth-page-title">Midnight</a>
+        <a href="/" className="mb-4 flex items-center justify-center gap-2 text-3xl"><MidnightLogo size="h-8 w-8" /><span className="brand-wordmark">midnight</span></a>
         <div className="glass-strong rounded-[2rem] p-6 shadow-float md:p-8">
           <h1 className="text-center font-serif text-4xl">Admin sign in</h1>
           <p className="mt-2 text-center text-sm text-muted-foreground">Use your username or email to manage Midnight.</p>
@@ -90,6 +94,7 @@ function Login() {
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, role: "editor" },
   { id: "analytics", label: "Analytics", icon: BarChart3, role: "editor" },
+  { id: "visitors", label: "Visitor analysis", icon: Activity_, role: "editor" },
   { id: "articles", label: "Articles", icon: FileText, role: "editor" },
   { id: "comments", label: "Comments", icon: MessageSquare, role: "editor" },
   { id: "readers", label: "Readers", icon: Users, role: "admin" },
@@ -118,7 +123,7 @@ function Dashboard({ me }: { me: Me }) {
       <div className="mb-5 flex min-w-0 items-center gap-3 px-1">
         <span className="avatar-orb h-10 w-10 shrink-0 text-sm" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>{me.username.slice(0, 1).toUpperCase()}</span>
         <div className="admin-label min-w-0">
-          <a href="/" className="block font-serif text-xl leading-tight">Midnight</a>
+          <a href="/" className="flex items-center gap-2 text-xl"><MidnightLogo size="h-6 w-6" /><span className="brand-wordmark">midnight</span></a>
           <p className="truncate text-xs text-muted-foreground">{me.username} · {me.role === "admin" ? "Admin" : "Editor"}</p>
         </div>
       </div>
@@ -162,6 +167,7 @@ function Dashboard({ me }: { me: Me }) {
       <main key={tab} className="admin-main admin-enter mx-auto w-full max-w-[90rem] space-y-6" data-collapsed={collapsed}>
         {tab === "overview" && <Overview />}
         {tab === "analytics" && <Analytics />}
+        {tab === "visitors" && <VisitorAnalysis />}
         {tab === "articles" && <Articles />}
         {tab === "comments" && <Comments />}
         {tab === "readers" && <Readers />}
@@ -278,20 +284,19 @@ const opts = <T extends string>(all: string, values: T[]): Option<T | "all">[] =
 function Overview() {
   const q = useQuery({ queryKey: ["admin", "overview"], queryFn: () => adminOverview() });
   if (!q.data) return <><H>Overview</H><State q={q} /></>;
-  const { stats, settings, failedLogins24h, mongo, members } = q.data;
+  const { stats, settings, failedLogins, mongo, members } = q.data;
   return (
     <>
-      <H sub="Last 30 days">Overview</H>
+      <H sub="All time · since the first recorded visit">Overview</H>
       {settings.maintenance_mode && <div className="admin-card flex flex-wrap items-center gap-2"><span className="admin-badge" data-tone="warn">Site paused</span> Visitors currently see the maintenance message.</div>}
       <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 xl:grid-cols-4">
         <Stat label="Page views" value={stats.views} glow="var(--glow-pink)" />
         <Stat label="Unique visitors" value={stats.visitors} glow="var(--glow-violet, var(--glow-pink))" />
-        <Stat label="Views today" value={stats.today} />
         <Stat label="Readers" value={members} />
         <Stat label="Published stories" value={mongo?.published} />
         <Stat label="Paused stories" value={mongo?.paused} />
-        <Stat label="Comments (new today)" value={mongo ? `${mongo.comments} (${mongo.commentsToday})` : null} />
-        <Stat label="Failed admin logins, 24h" value={failedLogins24h} />
+        <Stat label="Comments" value={mongo?.comments} />
+        <Stat label="Failed admin logins" value={failedLogins} />
       </div>
       <ViewsChart daily={stats.daily} />
     </>
@@ -336,23 +341,23 @@ function BarList({ title, rows }: { title: string; rows: { label: string; value:
 
 function Analytics() {
   const [days, setDays] = useState<number | null>(30);
-  const d = days ?? 30;
+  const d = days;
   const q = useQuery({ queryKey: ["admin", "stats", d], queryFn: () => adminStats({ data: { days: d } }) });
   const s = q.data;
-  const t = useQuery({ queryKey: ["admin", "totals"], queryFn: () => adminCommunityTotals() });
+  const t = useQuery({ queryKey: ["admin", "totals", d], queryFn: () => adminCommunityTotals({ data: { days: d } }) });
   const tt = t.data;
   const GA_ID = useQuery(gaIdQuery).data?.gaId;
   return (
     <>
       <H sub={GA_ID ? `Google Analytics is also collecting (${GA_ID}).` : "Google Analytics turns on once a measurement ID is added."}
-        right={<DaysPicker value={days} onChange={setDays} align="end" />}>Analytics</H>
-      <p className="admin-stat-label">All-time totals</p>
+        right={<DaysPicker value={days} onChange={setDays} allowAll align="end" />}>Analytics</H>
+      <p className="admin-stat-label">{daysLabel(days)} · UTC</p>
       <State q={t}>
         {tt && (
           <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <Stat label="Readers" value={tt.readers} glow="var(--glow-pink)" />
+            <Stat label="Readers joined" value={tt.readers} glow="var(--glow-pink)" />
             <Stat label="Published stories" value={tt.published} />
-            <Stat label="Paused stories" value={tt.paused} />
+            <Stat label="Paused stories updated" value={tt.paused} />
             <Stat label="Comments" value={tt.comments} />
             <Stat label="Replies" value={tt.replies} />
             <Stat label="Story likes" value={tt.likes} glow="var(--glow-pink)" />
@@ -367,7 +372,7 @@ function Analytics() {
       <State q={q}>
         {s && (
           <>
-            <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-3"><Stat label="Views" value={s.views} /><Stat label="Visitors" value={s.visitors} /><Stat label="Today" value={s.today} /></div>
+            <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2"><Stat label="Views" value={s.views} /><Stat label="Unique browser visitors" value={s.visitors} /></div>
             <ViewsChart daily={s.daily} />
             <div className="grid gap-4 lg:grid-cols-2">
               <BarList title="Pages (URL visits)" rows={s.paths.map((p) => ({ label: p.path, value: p.views, sub: `${p.visitors} people` }))} />
@@ -381,6 +386,52 @@ function Analytics() {
       </State>
     </>
   );
+}
+
+const duration = (ms: number) => `${Math.floor(ms / 60_000)}m ${Math.floor(ms / 1000) % 60}s`;
+function VisitorAnalysis() {
+  const [days, setDays] = useState<number | null>(30);
+  const fetch = useServerFn(adminVisitorAnalysis);
+  const q = useQuery({ queryKey: ["admin", "visitor-analysis", days], queryFn: () => fetch({ data: { days } }), refetchInterval: 30_000 });
+  const s = q.data;
+  const humans = s ? s.visits - s.bots : 0;
+  return <>
+    <H sub={s?.since ? `Recorded since ${fmt(s.since)} · ${daysLabel(days)}` : "New visitor measurements · historical reading activity is unavailable"}
+      right={<DaysPicker value={days} onChange={setDays} allowAll align="end" />}>Visitor analysis</H>
+    <State q={q}>
+      {s && <>
+        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 xl:grid-cols-4">
+          <Stat label="Visits" value={s.visits} /><Stat label="Browser visitors" value={s.visitors} />
+          <Stat label="Active reader visits (estimated)" value={s.active} /><Stat label="Likely bot visits" value={s.bots} />
+          <Stat label="Unconfirmed / idle visits" value={s.unconfirmed} /><Stat label="Active time, excluding bots" value={duration(s.activeMs)} />
+          <Stat label="Story reading time, excluding bots" value={duration(s.readingMs)} /><Stat label="Idle time, excluding bots" value={duration(s.idleMs)} />
+          <Stat label="Hidden / unfocused time, excluding bots" value={duration(s.hiddenMs)} />
+          <Stat label="Visits reading multiple stories" value={s.multipleStories} />
+          <Stat label="Single-page visits, excluding bots" value={humans ? `${Math.round(s.single / humans * 100)}%` : "—"} />
+          <Stat label="Pages per visit" value={s.visits ? (s.pages / s.visits).toFixed(1) : "—"} />
+        </div>
+        <p className="text-sm text-muted-foreground">Bot and active-reader classifications are estimates. Anonymous browser identifiers do not identify people. Active time excludes hidden or unfocused tabs and stops after 60 seconds without activity. Legacy visits have no reading measurements.</p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <BarList title="Pages per non-bot visit" rows={s.depth.map((d) => ({ label: `${d.pages} pages`, value: d.visits }))} />
+          <BarList title="Common non-bot journeys" rows={s.journeys.map((j) => ({ label: j.path.join(" → "), value: j.visits }))} />
+        </div>
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">Recent visits</h2>
+          {!s.recent.length && <p className="admin-empty text-muted-foreground">No measured visits in this period.</p>}
+          {s.recent.map((v) => <details key={`${v.id}-${v.started}`} className="admin-card min-w-0">
+            <summary className="cursor-pointer space-y-2">
+              <span className="flex flex-wrap justify-between gap-2 text-sm"><span>Visit {v.id} · {fmt(v.started)}</span><span className="admin-badge">{readerClass(v.bot, v.activeMs, v.interactions)}</span></span>
+              <span className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground"><span>{v.pages} pages · {v.stories} stories</span><span>Active {duration(v.activeMs)}</span><span>Reading {duration(v.readingMs)}</span><span>{v.interactions} interactions · {v.scroll}% scroll</span></span>
+            </summary>
+            <div className="mt-3 border-t border-border pt-3 text-sm">
+              <p className="mb-3 text-muted-foreground">Visit span {duration(v.durationMs)} · Idle {duration(v.idleMs)} · Hidden / unfocused {duration(v.hiddenMs)}</p>
+              <ol className="space-y-2">{v.path.map((p, i) => <li key={`${i}-${p}`} className="flex min-w-0 gap-3"><span className="shrink-0 text-muted-foreground">{i + 1}.</span><span className="break-all">{p}</span></li>)}</ol>
+            </div>
+          </details>)}
+        </section>
+      </>}
+    </State>
+  </>;
 }
 
 /* ---------- Articles ---------- */

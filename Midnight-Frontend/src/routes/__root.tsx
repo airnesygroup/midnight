@@ -19,7 +19,6 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CompactHeader } from "@/components/compact-header";
-import { ColorGlow } from "@/components/color-glow";
 import appCss from "../styles.css?url";
 import { siteMetaQuery } from "@/lib/catalogue.functions";
 import { setSiteMeta } from "@/data/news";
@@ -111,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Comfortaa:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "icon", href: "/icon-192.png", type: "image/png", sizes: "192x192" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
@@ -147,6 +146,14 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <svg aria-hidden="true" width="0" height="0" style={{ position: "absolute" }}>
+          <filter id="brand-inline" x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+            <feMorphology in="SourceAlpha" operator="erode" radius="1.4" result="outer" />
+            <feMorphology in="SourceAlpha" operator="erode" radius="2.4" result="inner" />
+            <feComposite in="outer" in2="inner" operator="out" result="line" />
+            <feComposite in="SourceGraphic" in2="line" operator="out" />
+          </filter>
+        </svg>
         {children}
         <Scripts />
       </body>
@@ -189,7 +196,6 @@ function RootComponent() {
       <AuthProvider>
       <TooltipProvider delayDuration={150}>
         <div className="app-shell aurora flex min-h-screen flex-col overflow-x-hidden">
-          {!pathname.startsWith("/article/") && <ColorGlow />}
           {fullHeader ? <SiteHeader /> : <CompactHeader />}
           {/* Story pages show only the message when the database is unreachable; never half-empty layouts. */}
           {paused ? (

@@ -8,5 +8,6 @@ const port = Number(process.env.VITE_PORT || 5173);
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // 127.0.0.1, not "localhost": on Node 17+ "localhost" resolves to IPv6 (::1) first, but the backend listens on IPv4 only.
   server: { port, proxy: { "/api": `http://127.0.0.1:${backendPort}` } },
 });

@@ -52,12 +52,12 @@ function SectionPage() {
   const [sort, setSort] = useState<SectionSort>("latest");
   const [date, setDate] = useState(emptyPublicationDate);
   const all = stories;
-  if (unavailable) return <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24"><DataUnavailable /></main>;
+  if (unavailable) return <main className="mx-auto w-full site-container pt-28 pb-24"><DataUnavailable /></main>;
   const list = sortSectionArticles(filterByPublicationDate(all, date), sort);
   const [top, ...rest] = list;
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24">
+    <main className="mx-auto w-full site-container pt-28 pb-24">
       <header className="glass grid grid-cols-[minmax(0,1fr)] gap-5 rounded-[1.5rem] px-6 py-7 md:px-8 md:py-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="min-w-0">
           <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{section.name}</h1>

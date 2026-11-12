@@ -18,8 +18,6 @@ export function Loader({ size = "md", label, className = "" }) {
   );
 }
 
-export const ColorGlow = () => <div aria-hidden className="header-glow"><div className="header-glow-color" /></div>;
-
 export function PageTitle({ children, sub, right }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

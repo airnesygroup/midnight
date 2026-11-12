@@ -64,7 +64,7 @@ export const Route = createFileRoute("/article/$slug")({
 
 function ArticlePage() {
   const { article, bodyUnavailable, related, latest } = Route.useLoaderData();
-  if (!article) return <main className="mx-auto max-w-7xl px-4 pb-24" />;
+  if (!article) return <main className="site-container pb-24" />;
   // Cards below the story look their stories up by headline, so make them known.
   addArticles([article, ...related, ...latest]);
   return <ArticleView a={article} bodyUnavailable={!!bodyUnavailable} related={related} latest={latest} />;
@@ -76,7 +76,7 @@ function ArticleView({ a, bodyUnavailable, related, latest }: { a: Article; body
   const [view, setView] = useState<"full" | "summary">("full");
 
   return (
-    <main className="mx-auto max-w-7xl px-4 pt-28 pb-24">
+    <main className="site-container pt-28 pb-24">
       <div aria-hidden className="header-glow"><img src={a.img} alt="" /></div>
       <article className="mx-auto max-w-4xl">
         <h1 className="mx-auto max-w-2xl text-center font-serif text-4xl leading-[1.1] font-semibold md:text-5xl">{a.title}</h1>

@@ -27,9 +27,9 @@ export const Route = createFileRoute("/explore")({
 function ExplorePage() {
   const { tiles, picks, unavailable } = Route.useLoaderData();
   addArticles(picks);
-  if (unavailable) return <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24"><DataUnavailable /></main>;
+  if (unavailable) return <main className="mx-auto w-full site-container pt-28 pb-24"><DataUnavailable /></main>;
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 pt-28 pb-24">
+    <main className="mx-auto w-full site-container pt-28 pb-24">
       <h1 className="text-4xl font-extrabold tracking-tight md:text-6xl">Explore</h1>
       <p className="mt-3 text-lg text-muted-foreground">Every section, all in one place.</p>
       <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-4">

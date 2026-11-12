@@ -17,13 +17,13 @@ function FooterLink({ label, isSection }: { label: string; isSection: boolean })
 
 export function SiteFooter() {
   return (
-    <footer className="mx-auto mt-auto w-full max-w-7xl px-4 pb-10">
+    <footer className="mx-auto mt-auto w-full site-container pb-10">
       <div className="glass rounded-[2.5rem] p-8 md:p-12">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[1.4fr_2fr]">
           <div>
             <Link to="/" className="flex items-center gap-2 text-3xl font-extrabold tracking-tight">
               <MidnightLogo size="h-8 w-8" />
-              midnight
+              <span className="brand-wordmark">midnight</span>
             </Link>
             <p className="mt-4 max-w-xs text-muted-foreground">
               News and information made easy to access. Clear, concise and straight to the point.

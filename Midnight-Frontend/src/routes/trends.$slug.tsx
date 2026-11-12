@@ -71,7 +71,7 @@ function TrendView({ t, bodyUnavailable, related }: { t: Trend; bodyUnavailable:
   const [view, setView] = useState<"full" | "summary">("full");
 
   return (
-    <main className="mx-auto max-w-7xl px-4 pt-28 pb-24">
+    <main className="site-container pt-28 pb-24">
       <div aria-hidden className="header-glow"><img src={t.img} alt="" /></div>
       <article className="mx-auto max-w-4xl">
         <h1 className="mx-auto max-w-2xl text-center font-serif text-4xl leading-[1.1] font-semibold md:text-5xl">{t.title}</h1>

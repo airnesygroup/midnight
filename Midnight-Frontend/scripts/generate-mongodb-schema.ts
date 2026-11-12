@@ -3,10 +3,11 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { collectionSchemas } from "../src/lib/mongodb/schemas";
 import { collectionIndexes } from "../src/lib/mongodb/indexes";
 
-function mongoSchema(value: unknown, field = ""): unknown {
-  if (Array.isArray(value)) return value.map((item) => mongoSchema(item, field));
+function mongoSchema(value: unknown, field = "", collection = ""): unknown {
+  if (Array.isArray(value)) return value.map((item) => mongoSchema(item, field, collection));
   if (!value || typeof value !== "object") return value;
   const input = value as Record<string, unknown>;
+  if (collection === "readerPages" && ["createdAt", "lastSeenAt"].includes(field)) return { bsonType: "date" };
   if (field === "_id") return { bsonType: ["objectId", "string"] };
   if (["expiresAt", "idleExpiresAt", "lastSeenAt", "revokedAt", "windowStartedAt"].includes(field)) {
     return { bsonType: input['type'] === 'string' ? "date" : ["date", "null"] };
@@ -15,13 +16,13 @@ function mongoSchema(value: unknown, field = ""): unknown {
   for (const [key, child] of Object.entries(input)) {
     if (["$schema", "format", "default", "definitions"].includes(key)) continue;
     if (key === "type" && child === "integer") { out['bsonType'] = ["int", "long", "double"]; out['multipleOf'] = 1; }
-    else if (key === "properties") out[key] = Object.fromEntries(Object.entries(child as Record<string, unknown>).map(([name, rule]) => [name, mongoSchema(rule, name)]));
-    else out[key] = mongoSchema(child, field);
+    else if (key === "properties") out[key] = Object.fromEntries(Object.entries(child as Record<string, unknown>).map(([name, rule]) => [name, mongoSchema(rule, name, collection)]));
+    else out[key] = mongoSchema(child, field, collection);
   }
   return out;
 }
 const collections = Object.fromEntries(Object.entries(collectionSchemas).map(([name, schema]) => [name, {
-  validator: { $jsonSchema: mongoSchema(zodToJsonSchema(schema, { $refStrategy: "none" })) },
+  validator: { $jsonSchema: mongoSchema(zodToJsonSchema(schema, { $refStrategy: "none" }), "", name) },
   validationLevel: "strict", validationAction: "error", indexes: collectionIndexes[name] ?? [],
 }]));
 await mkdir("mongodb", { recursive: true });

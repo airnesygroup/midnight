@@ -4,6 +4,7 @@ import { z } from "zod";
 import { escapeRegex, pageInput, queryWords, sinceDate, slicePage, toPage } from "./admin-paging";
 import { articleBulkInput, articleEditFields, articleFilter, articleInput, articleListInput, selectedArticleFilter } from "./admin-articles";
 import { publicationStatus } from "./mongodb/schemas";
+import { periodInput, recordedDateMatch } from "./reader-analysis";
 
 const srv = () => import("./admin.server");
 const MAX_FAILED_LOGINS = 10;
@@ -56,7 +57,7 @@ export const adminLogout = createServerFn({ method: "POST" }).handler(async () =
 type Stats = import("./admin.server").Stats;
 
 export const adminStats = createServerFn({ method: "GET" })
-  .inputValidator((d) => z.object({ days: z.number().int().min(1).max(365), slug: z.string().max(300).nullable().optional() }).parse(d))
+  .inputValidator((d) => periodInput.extend({ slug: z.string().max(300).nullable().optional() }).parse(d))
   .handler(async ({ data }) => {
     const { requireAdmin, viewStats } = await srv();
     await requireAdmin("editor");
@@ -68,9 +69,9 @@ export const adminOverview = createServerFn({ method: "GET" }).handler(async () 
   const me = await requireAdmin("editor");
   const { withDb } = await import("./community.server");
   const [stats, settings, failed, mongo, members] = await Promise.all([
-    viewStats(30),
+    viewStats(null),
     loadSettings(),
-    adminDb((db) => auditLog(db).countDocuments({ action: "login_failed", createdAt: { $gte: new Date(Date.now() - 86_400_000) } })),
+    adminDb((db) => auditLog(db).countDocuments({ action: "login_failed" })),
     withDb(async (m) => {
       const [published, paused, comments, commentsToday, readers] = await Promise.all([
         m.collection("articles").countDocuments({ status: "published" }),
@@ -83,28 +84,43 @@ export const adminOverview = createServerFn({ method: "GET" }).handler(async () 
     }).catch(() => null),
     me.role === "admin" ? withDb((m) => m.collection("users").countDocuments({})).catch(() => null) : Promise.resolve(null),
   ]);
-  return { stats, settings, failedLogins24h: failed, mongo, members };
+  return { stats, settings, failedLogins: failed, mongo, members };
 });
 
-export const adminCommunityTotals = createServerFn({ method: "GET" }).handler(async () => {
+export const adminCommunityTotals = createServerFn({ method: "GET" })
+  .inputValidator((d) => periodInput.parse(d))
+  .handler(async ({ data }) => {
   const { requireAdmin } = await srv();
   await requireAdmin("editor");
   const { withDb } = await import("./community.server");
   return withDb(async (m) => {
+    const now = new Date();
+    const created = recordedDateMatch("createdAt", data.days, now);
+    const publishedDate = recordedDateMatch("publishedAt", data.days, now);
+    const pausedDate = recordedDateMatch("updatedAt", data.days, now);
     const [published, paused, comments, replies, likes, saves, shares, commentLikes, readers] = await Promise.all([
-      m.collection("articles").countDocuments({ status: { $ne: "paused" } }),
-      m.collection("articles").countDocuments({ status: "paused" }),
-      m.collection("communityComments").countDocuments({ deletedAt: null, parentId: null }),
-      m.collection("communityComments").countDocuments({ deletedAt: null, parentId: { $ne: null } }),
-      m.collection("communityInteractions").countDocuments({ kind: "like" }),
-      m.collection("communityInteractions").countDocuments({ kind: "save" }),
-      m.collection("communityShares").countDocuments({}),
-      m.collection("communityCommentLikes").countDocuments({}),
-      m.collection("communityProfiles").countDocuments({}),
+      m.collection("articles").countDocuments({ status: "published", ...publishedDate }),
+      m.collection("articles").countDocuments({ status: "paused", ...pausedDate }),
+      m.collection("communityComments").countDocuments({ deletedAt: null, parentId: null, ...created }),
+      m.collection("communityComments").countDocuments({ deletedAt: null, parentId: { $ne: null }, ...created }),
+      m.collection("communityInteractions").countDocuments({ kind: "like", ...created }),
+      m.collection("communityInteractions").countDocuments({ kind: "save", ...created }),
+      m.collection("communityShares").countDocuments(recordedDateMatch("at", data.days, now)),
+      m.collection("communityCommentLikes").countDocuments(created),
+      m.collection("users").countDocuments(created),
     ]);
     return { published, paused, comments, replies, likes, saves, shares, commentLikes, readers };
   });
 });
+
+export const adminVisitorAnalysis = createServerFn({ method: "GET" })
+  .inputValidator((d) => periodInput.parse(d))
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await srv();
+    await requireAdmin("editor");
+    const { readerAnalysis } = await import("./reader-analysis.server");
+    return readerAnalysis(data.days);
+  });
 
 /* ---------- Articles (MongoDB) ---------- */
 

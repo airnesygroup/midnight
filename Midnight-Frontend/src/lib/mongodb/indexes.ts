@@ -6,6 +6,7 @@ export type CollectionIndex = {
 };
 const unique = (name: string, key: CollectionIndex["key"]): CollectionIndex => ({ name, key, unique: true });
 export const collectionIndexes: Record<string, CollectionIndex[]> = {
+  readerPages: [{ name: "reader_recent", key: { createdAt: -1 } }, { name: "reader_journey", key: { sessionId: 1, createdAt: 1 } }],
   articles: [unique("article_id", { id: 1 }), unique("article_slug", { slug: 1 }),
     { name: "section_publication", key: { status: 1, tag: 1, publishedAt: -1, slug: 1 } },
     { name: "popular", key: { status: 1, views: -1, slug: 1 } },

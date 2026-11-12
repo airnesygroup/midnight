@@ -139,10 +139,10 @@ export function SiteHeader() {
     <>
     <PageLock active={menuOpen || searchOpen} onClose={() => { setMenuOpen(false); setSearchOpen(false); }} />
     <div aria-hidden className="header-haze pointer-events-none fixed inset-x-0 top-0 z-40 h-28" />
-    <header ref={headerRef} className="fixed inset-x-0 top-4 z-50 mx-auto max-w-7xl px-4">
+    <header ref={headerRef} className="fixed inset-x-0 top-4 z-50 site-container">
       {/* Invisible copies used to measure natural widths */}
       <div ref={measureRef} aria-hidden className="pointer-events-none invisible absolute -z-10 flex whitespace-nowrap">
-        <span data-m="wordmark" className="text-2xl font-extrabold tracking-tight">midnight</span>
+        <span data-m="wordmark" className="brand-wordmark text-2xl">midnight</span>
         <span data-m="More" className="flex items-center gap-1 text-[15px] font-medium">More <ChevronDown className="h-4 w-4" /></span>
         <span data-m="signin" className="px-4 font-medium">Sign in</span>
         <span data-m="searchbar" className="inline-block w-52 xl:w-64" />
@@ -153,7 +153,7 @@ export function SiteHeader() {
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-6">
             <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex shrink-0 items-center gap-2 text-2xl font-extrabold tracking-tight">
               <MidnightLogo />
-              {cfg.wordmark && <span className="hidden md:inline">midnight</span>}
+              {cfg.wordmark && <span className="brand-wordmark hidden md:inline">midnight</span>}
             </Link>
           {(
             <Button variant="ghost"

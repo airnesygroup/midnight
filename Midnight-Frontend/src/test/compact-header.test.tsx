@@ -13,6 +13,8 @@ vi.mock("@/components/account-button", () => ({
   AccountButton: () => <a aria-label="Your account" href="/profile" onClick={(event) => { event.preventDefault(); state.navigate("/profile"); }}>Account</a>,
 }));
 vi.mock("@/components/news-bits", () => ({ MidnightLogo: () => <span /> }));
+// The header search now asks the server through react-query; these tests only cover the account links.
+vi.mock("@/lib/story-search", () => ({ useStorySearch: () => ({ results: [], searching: false }) }));
 import { CompactHeader } from "@/components/compact-header";
 
 afterEach(() => { cleanup(); state.user = null; state.navigate.mockClear(); });

@@ -106,11 +106,19 @@ export const auditSchema = z.object({
   ...document, id, actorId: id.nullable(), action: z.string(), targetId: id.nullable(), occurredAt: timestamp,
 }).strict();
 
+/** BSON date conversion for this runtime analytics collection is applied by the schema generator. */
+export const readerPageSchema = z.object({
+  _id: z.string().uuid(), path: z.string().min(1).max(500), articleSlug: z.string().max(300).nullable(),
+  visitorId: z.string().min(8).max(64), sessionId: z.string().uuid(), device: z.enum(["mobile", "tablet", "desktop"]).nullable(),
+  isBot: z.boolean(), tokenHash: z.string().min(1), createdAt: timestamp, lastSeenAt: timestamp,
+  activeMs: count, idleMs: count, hiddenMs: count, scroll: z.number().int().min(0).max(100), interactions: count, sequence: count,
+}).strict();
+
 export const collectionSchemas = {
   articles: articleSchema, trends: trendSchema, sections: sectionSchema, reports: reportSchema, infoPages: infoPageSchema,
   placements: placementSchema, profiles: profileSchema, userRoles: roleSchema, comments: commentSchema,
   articleInteractions: interactionSchema, commentLikes: commentLikeSchema, shareEvents: shareSchema,
-  viewEvents: viewSchema, sessions: sessionSchema, policies: policySchema, rateLimits: rateLimitSchema, auditEvents: auditSchema,
+  viewEvents: viewSchema, sessions: sessionSchema, policies: policySchema, rateLimits: rateLimitSchema, auditEvents: auditSchema, readerPages: readerPageSchema,
 };
 export type ArticleDocument = z.infer<typeof articleSchema>;
 export type TrendDocument = z.infer<typeof trendSchema>;

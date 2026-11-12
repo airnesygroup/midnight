@@ -4,6 +4,8 @@ import { ArrowUpRight, Clock } from "lucide-react";
 import { formatPublished, topNews, type Article } from "@/data/news";
 import { ThumbRow } from "@/components/cards";
 import { EmptyCard } from "@/components/states";
+import { useQuery } from "@tanstack/react-query";
+import { reportDatesQuery } from "@/lib/reports.functions";
 
 /** Fixed star positions [left%, top%, delay s] so server and browser render the same sky. */
 const STARS: [number, number, number][] = [[12,18,0],[28,62,1.2],[44,30,2.4],[63,14,0.6],[78,48,1.8],[88,22,3],[20,82,2.1],[55,74,0.3],[70,86,1.5],[36,10,2.8],[92,70,0.9],[8,46,3.3]];
@@ -11,6 +13,9 @@ const STARS: [number, number, number][] = [[12,18,0],[28,62,1.2],[44,30,2.4],[63
 /** Hero lead + two side cards rotate together through the top news (by headline weight). */
 export function TopNewsHero() {
   const featured = topNews();
+  const { data: reportDates } = useQuery(reportDatesQuery);
+  const latest = reportDates?.dates[0];
+  const latestLabel = latest ? new Date(latest + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) + " · Latest edition" : reportDates ? "New editions every night" : "\u00a0";
   const [offset, setOffset] = useState(0);
   const [paused, setPaused] = useState(false);
   const [rotated, setRotated] = useState(false);
@@ -37,7 +42,7 @@ export function TopNewsHero() {
       <div className="relative min-w-0 flex-1">
         <p className="truncate text-[10px] font-bold tracking-wider uppercase opacity-70 sm:text-[11px]">The newsroom edition</p>
         <h2 className="mt-0.5 truncate text-sm font-extrabold tracking-tight sm:text-base">The Midnight Report</h2>
-        <p className="mt-0.5 truncate text-xs opacity-70">26 October 2026 · Sample edition</p>
+        <p className="mt-0.5 truncate text-xs opacity-70">{latestLabel}</p>
       </div>
       <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full"><ArrowUpRight className="h-4 w-4 opacity-80 transition group-hover:rotate-45 sm:h-5 sm:w-5" /></span>
     </Link>

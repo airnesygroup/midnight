@@ -58,11 +58,11 @@ export function CompactHeader() {
     <>
       <PageLock active={open} onClose={() => setOpen(false)} />
       <div aria-hidden className="header-haze pointer-events-none fixed inset-x-0 top-0 z-40 h-28" />
-      <header className="fixed inset-x-0 top-4 z-50 mx-auto max-w-7xl px-4">
+      <header className="fixed inset-x-0 top-4 z-50 site-container">
         <nav className="glass grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-full py-2.5 pr-2.5 pl-4 sm:grid-cols-[1fr_minmax(0,28rem)_1fr] sm:pl-6">
           <Link to="/" className="flex items-center gap-2 justify-self-start text-2xl font-extrabold tracking-tight">
             <MidnightLogo />
-            <span className="hidden md:inline">midnight</span>
+            <span className="brand-wordmark hidden md:inline">midnight</span>
           </Link>
 
           <Button variant="ghost"

@@ -1,3 +1,12 @@
+# Site accent colours (Nov 12)
+- [x] Replace pink/purple site gradients with neutral surfaces and solid red accents; preserve header colour glow.
+- [x] Verified solid red search and article arrow rims at 1337 and 390 in light/dark; neutral page backgrounds, preserved header images, no page errors.
+
+# Admin analytics (Nov 5)
+- [ ] Make Overview all-time and filter every Analytics metric by the selected period.
+- [ ] Add active-reading, idle/hidden-tab and bot estimates with anonymous visit journeys in Visitor analysis.
+- [ ] Test time/counting rules and verify authenticated dashboard readback.
+
 # Homepage headline and placement (Nov 4)
 - [x] Enlarge the main image headline and prevent repeated stories across homepage news sections.
 - [x] Test selection rules and verify live layouts at 1280, 949 and 390: 180 unique article placements, larger headline, no overflow or page errors.
@@ -202,3 +211,8 @@
 - [x] Confirm sign-in, sign-up and all user data run on MongoDB only (code already does).
 - [x] Add .env.example listing every setting the code reads.
 - [x] Save MONGODB_URI and COMMUNITY_ENCRYPTION_KEY securely (waiting on user).
+
+# Logo + header polish (Nov 12)
+- [x] Continuous inner line in logo letters.
+- [x] Subtler borders on jump arrows and search bars.
+- [x] Header colour glow only on article pages.
