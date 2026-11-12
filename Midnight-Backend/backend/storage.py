@@ -259,6 +259,72 @@ class MongoStorage:
         return {d["normUrl"]: d["nextTryAt"] for d in
                 self.ledger.find({"retryable": True, "nextTryAt": {"$gt": now}}, {"normUrl": 1, "nextTryAt": 1})}
 
+    # ----------------------------------------------- stuck rows: make "will retry" actually mean it
+    def attempts_for(self, url):
+        """How many tries this story has already had (0 for a story never recorded). The scraper uses it to pick a
+        DIFFERENT approach for every retry."""
+        d = self.ledger.find_one({"normUrl": normalise_url(url)}, {"attempts": 1}) or {}
+        return int(d.get("attempts") or 0)
+
+    @staticmethod
+    def _snapshot_from_row(d, feed_by_source=None):
+        """Rebuild what is needed to write a story from its ledger row alone (title, url, source, a text snippet). The
+        scraper fetches the page again anyway, so this is enough to retry a story the feed no longer lists."""
+        old = d.get("entry") or {}
+        feed = old.get("feedUrl") or (feed_by_source or {}).get(d.get("sourceName"))
+        return {"title": old.get("title") or d.get("sourceTitle"), "url": old.get("url") or d.get("sourceUrl"),
+                "source": old.get("source") or d.get("sourceName"),
+                "text": (old.get("text") or d.get("snippet") or "")[:ENTRY_TEXT_CHARS],
+                "images": list(old.get("images") or [])[:6], "published_at": old.get("published_at"), "feedUrl": feed}
+
+    def rescue_stuck(self, feed_by_source=None, limit=2000):
+        """Rows shown as 'will retry' that could never actually be retried, because due_entries() needs a saved entry
+        snapshot, a feed to attach it to and a nextTryAt:
+          * rows written before the retry columns existed (status failed, no `retryable` field at all)
+          * retryable rows without a snapshot (so the story had to still be in the feed, which it usually is not)
+          * retryable rows without a nextTryAt
+        Each one gets what it is missing and becomes due now. Never touches published or abandoned rows. Returns the count."""
+        cap, now, fixed = max_attempts(), now_iso(), 0
+        q = {"status": {"$in": ["failed", "skipped"]}, "$or": [
+            {"status": "failed", "retryable": {"$exists": False}},
+            {"retryable": True, "entry": {"$exists": False}},
+            {"retryable": True, "nextTryAt": None}]}
+        for d in list(self.ledger.find(q).limit(limit)):
+            if int(d.get("attempts") or 0) >= cap or not d.get("sourceUrl") or not d.get("sourceTitle"):
+                continue
+            snap = self._snapshot_from_row(d, feed_by_source)
+            if not snap.get("feedUrl"):
+                continue
+            self.ledger.update_one({"_id": d["_id"]}, {"$set": {"retryable": True, "entry": snap,
+                                                                "nextTryAt": d.get("nextTryAt") or now}})
+            fixed += 1
+        return fixed
+
+    def requeue_abandoned(self, reason_regex, days=14, feed_by_source=None, reset_attempts=True, dry_run=False, limit=5000):
+        """Give stories that were abandoned by the OLD policy (thin text, no image, broken downloads: reasons that a
+        different approach can fix) a fresh set of tries. Only recent stories (`days`), never published ones, never
+        duplicates. Returns the number reopened (or that would be, with dry_run)."""
+        cutoff = iso(datetime.now(timezone.utc) - timedelta(days=days))
+        q = {"status": {"$in": ["failed", "skipped"]}, "retryable": {"$ne": True},
+             "firstSeenAt": {"$gte": cutoff}, "reason": {"$regex": reason_regex, "$options": "i"}}
+        n, now = 0, now_iso()
+        for d in list(self.ledger.find(q).limit(limit)):
+            if "same story already covered" in (d.get("reason") or "") or d.get("articleId"):
+                continue
+            snap = self._snapshot_from_row(d, feed_by_source)
+            if not snap.get("feedUrl") or not snap.get("title") or not snap.get("url"):
+                continue
+            n += 1
+            if dry_run:
+                continue
+            fields = {"status": "failed", "retryable": True, "nextTryAt": now, "entry": snap}
+            if reset_attempts:
+                fields["attempts"] = 0
+            self.ledger.update_one({"_id": d["_id"]}, {"$set": fields, "$push": {"history": {
+                "at": now, "status": "reopened", "reason": "reopened for a new set of tries with different approaches",
+                "attempt": 0}}})
+        return n
+
     def load_seen(self, seen, limit=50000):
         """Seeds a dedupe.SeenIndex with everything already covered (published or abandoned).
         Queued stories and stories waiting for a retry are NOT covered yet."""

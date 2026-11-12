@@ -1,6 +1,6 @@
 import { absUrl } from "@/lib/site";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { BigCard, ThumbRow } from "@/components/cards";
+import { BigCard, LeadLayout, MiniCard, ThumbRow, leadCount } from "@/components/cards";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicationDatePicker } from "@/components/publication-date-filter";
@@ -77,18 +77,9 @@ function SectionPage() {
 
       {top ? (
         <div className="mt-8 space-y-6">
-          {/* The lead photo keeps a fixed shape; extra stories flow below it instead of stretching it. */}
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <div className="aspect-[4/5] sm:aspect-[4/3] lg:aspect-[6/5] lg:self-start [&>div]:h-full">
-              <BigCard s={top} />
-            </div>
-            <div className="space-y-3">
-              {rest.slice(0, 6).map((a) => (
-                <ThumbRow key={a.slug} s={a} />
-              ))}
-            </div>
-          </div>
-          {rest.length > 6 && <MoreStories key={`${section.slug}-${sort}-${date.day}-${date.month}-${date.year}`} items={rest.slice(6)} />}
+          {/* Lead photo with cards beneath it; the list beside it stretches to match, so no blank space is left. */}
+          <LeadLayout hero={<BigCard s={top} />} items={rest} mini={(a) => <MiniCard s={a} />} row={(a) => <ThumbRow s={a} fill />} />
+          {rest.length > leadCount(rest.length) && <MoreStories key={`${section.slug}-${sort}-${date.day}-${date.month}-${date.year}`} items={rest.slice(leadCount(rest.length))} />}
         </div>
       ) : (
         <section className="mt-8">

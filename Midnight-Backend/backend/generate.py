@@ -157,6 +157,24 @@ class Rotation:
             q.extend(deferred)
 
 
+def retry_note(res):
+    """' (try 2 of 6, next in 30 min with a different approach)' / ' (given up after 6 tries)' / ''."""
+    if not res:
+        return ""
+    cap = config.item_retry_settings()["max_attempts"]
+    if res.get("retrying"):
+        mins = ""
+        try:
+            secs = (datetime.fromisoformat(res["nextTryAt"].replace("Z", "+00:00")) - datetime.now(timezone.utc)).total_seconds()
+            mins = f", next in {max(1, round(secs / 60))} min"
+        except Exception:  # noqa: BLE001
+            pass
+        return f" (try {res.get('attempts', '?')} of {cap}{mins}, with a different approach)"
+    if res.get("attempts"):
+        return f" (given up after {res['attempts']} tries)"
+    return ""
+
+
 def process_entry(entry, section_slug, storage, seen, dry_run=False, monitor=None, rewrite=None, verify=None):
     """Hydrate (+verify image) -> rewrite (+completeness) -> fact-check -> final gate -> push.
 
@@ -172,13 +190,20 @@ def process_entry(entry, section_slug, storage, seen, dry_run=False, monitor=Non
             raise NotNewsArticle(f"not a real news article (writer model): {n}") from n
     verify = verify or factcheck.verify
     mon.emit("fetching", f"Reading {entry['source']}: {entry['title'][:80]}", source=entry["source"])
+    entry["attempt"] = 0                       # tries so far: every retry starts from a DIFFERENT approach (pagefetch.ladder)
     if not dry_run:
         image_guard.use_database(storage.db)   # lets the generic-image guard see what is already published
+        try:
+            entry["attempt"] = storage.attempts_for(entry["url"])
+        except Exception:  # noqa: BLE001 - bookkeeping must never stop an article
+            pass
     hydrate_entry(entry)                       # raises NoVerifiedImage
     text = entry.get("text", "")
     n_words, need = len(text.split()), config.source_settings()["min_words"]
     if len(text) < MIN_SOURCE_CHARS or n_words < need:
-        raise ThinSource(f"source text too thin to write an honest article ({n_words} words of real text, need {need})")
+        tried = entry.get("_diag")
+        raise ThinSource(f"source text too thin to write an honest article ({n_words} words of real text, need {need})"
+                         + (f" | tried: {tried}" if tried else ""))
     mon.emit("image_ok", f"Image verified for {entry['source']}", img=entry["images"][0])
     mon.emit("writing", f"Writing: {entry['title'][:80]}", source=entry["source"])
     post = rewrite(entry)                      # raises Incomplete / llm errors
@@ -359,14 +384,35 @@ def run(count=50, forever=False, interval=300, dry_run=False, storage=None, sour
             seen.add(entry["url"], entry["title"])
         return res
 
+    feed_by_source = {}
+    for n_, u_, _s in sources:
+        feed_by_source.setdefault(n_, u_)
+    rescued_at = {"t": -1e9}
+
+    def rescue_stuck():
+        """'Will retry' rows that can never actually be retried (no snapshot / no due time) are repaired, so every
+        story that is waiting for a retry really comes back. At start and then every 30 minutes."""
+        if dry_run or time.monotonic() - rescued_at["t"] < 1800 or not hasattr(storage, "rescue_stuck"):
+            return
+        rescued_at["t"] = time.monotonic()
+        try:
+            n = storage.rescue_stuck(feed_by_source)
+            if n:
+                say(f"  \u21bb {n} story(ies) that were marked 'will retry' but could never come back are queued again.")
+                mon.emit("retry", f"Re-queued {n} stuck 'will retry' stories", count=n)
+        except Exception as e:  # noqa: BLE001
+            mon.emit("failed", f"Stuck-story rescue error: {type(e).__name__}: {str(e)[:100]}", level="warn")
+
     hold()
     tick_reports()
+    rescue_stuck()
     rot = Rotation(sources, seen, fetch, store=None if dry_run else storage)
     consecutive_failures = 0
 
     try:
         while True:
             made_this_pass = 0
+            rescue_stuck()
             if not dry_run:
                 storage.load_sections()      # sections added/removed on the site apply from this pass on
             for name, url, section in sources:
@@ -401,30 +447,31 @@ def run(count=50, forever=False, interval=300, dry_run=False, storage=None, sour
                         return state["published"]
                     except Skip as e:
                         tries += 1
-                        retry_it = isinstance(e, FailedFactCheck)      # a fresh rewrite may pass another time
-                        res = settle(entry, name, section, "skipped", str(e)[:200], retry_it)
+                        # a fresh rewrite may pass another time; a thin page may give its full text to a different approach
+                        retry_it = isinstance(e, (FailedFactCheck, ThinSource))
+                        res = settle(entry, name, section, "skipped", str(e)[:400], retry_it)
                         state["skipped"] += 1
-                        say(f"  ~ skip [{name}] {entry['title'][:60]} — {e}" + (" (will retry)" if res["retrying"] else ""))
-                        mon.emit("skipped", f"[{name}] {entry['title'][:60]} — {e}" + (" (will retry)" if res["retrying"] else ""),
-                                 source=name)
+                        when = retry_note(res)
+                        say(f"  ~ skip [{name}] {entry['title'][:60]} — {e}" + when)
+                        mon.emit("skipped", f"[{name}] {entry['title'][:60]} — {e}" + when, source=name)
                         continue
                     except NoVerifiedImage as e:
                         tries += 1
                         transient = getattr(e, "transient", False)
-                        # Only network trouble (timeouts, 5xx): not the story's fault, so it is recorded as a failure
-                        # and retried later. A genuinely bad image skips for good.
-                        res = settle(entry, name, section, "failed" if transient else "skipped", str(e)[:200], transient)
+                        # Network trouble is recorded as a failure, a bad picture as a skip, but BOTH are retried: the
+                        # next try looks at the page a different way (AMP, mobile ...) and finds other pictures.
+                        res = settle(entry, name, section, "failed" if transient else "skipped", str(e)[:400], True)
                         state["failed" if transient else "skipped"] += 1
                         say(f"  ~ skip [{name}] {entry['title'][:60]} — {e}")
                         mon.emit("failed" if transient else "skipped",
-                                 f"[{name}] no verified image{' (network trouble, will retry later)' if res['retrying'] else ''}: {entry['title'][:60]}",
+                                 f"[{name}] no verified image{retry_note(res)}: {entry['title'][:60]}",
                                  source=name, reason=str(e)[:200], level="warn" if transient else "info")
                         continue
                     except Exception as e:  # Incomplete, LLMError, network, anything else
                         tries += 1
                         consecutive_failures += 1
                         kind = "incomplete" if isinstance(e, Incomplete) else type(e).__name__
-                        res = settle(entry, name, section, "failed", f"{kind}: {str(e)[:200]}", True)
+                        res = settle(entry, name, section, "failed", f"{kind}: {str(e)[:300]}", True)
                         state["failed"] += 1
                         say(f"  ! fail [{name}] {entry['title'][:60]}: {kind}: {str(e)[:120]}")
                         mon.emit("failed", f"[{name}] {entry['title'][:60]} — {kind}: {str(e)[:120]}" +

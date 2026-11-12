@@ -124,57 +124,24 @@ def _images_from_entry(item, verify=True):
     return imgs if not verify else _verified_images(imgs)
 
 
+_DIAG = {}     # url -> notes about every page look (what happened, how many words), read back by hydrate_entry
+
+
+def _scrape_profile(url, source, profile="browser", attempt=0):
+    """One look at the article page with one approach (see pagefetch.PROFILES). Returns (text, image candidates).
+    Never raises; what happened is kept in _DIAG so a skip can say WHY (blocked? empty? really short?)."""
+    import pagefetch
+    text, imgs, note = pagefetch.scrape(url, profile, attempt)
+    _DIAG.setdefault(url, []).append(note)
+    if len(_DIAG) > 500:
+        for k in list(_DIAG)[:100]:
+            _DIAG.pop(k, None)
+    return text, imgs
+
+
 def _scrape_html_fallback(url, source):
-    """Best-effort fetch of a single article page when RSS lacks body text."""
-    try:
-        page = _get(url)
-    except Exception:
-        return None, []
-
-    # Restrict image search to the actual article content, not the whole
-    # page — the whole page includes nav bars, footers, ads, and author
-    # avatars, which is where most of the "random logo" images came from.
-    content_area = (
-        page.find("article")
-        or page.find("main")
-        or page.find(attrs={"class": re.compile(r"article|post-content|entry-content", re.I)})
-        or page
-    )
-
-    paragraphs = [p.get_text(strip=True) for p in content_area.find_all("p")]
-    text = "\n\n".join([p for p in paragraphs if len(p) > 40][:15])
-
-    candidates = []
-    # og:image is the page's own declared hero photo — highest confidence,
-    # always tried first regardless of where it's declared in the HTML.
-    for attrs in ({"property": "og:image"}, {"property": "og:image:secure_url"}, {"name": "twitter:image"},
-                  {"name": "twitter:image:src"}, {"property": "twitter:image"}):
-        m = page.find("meta", attrs=attrs)
-        if m and m.get("content"):
-            u = urljoin(url, m["content"])
-            if u not in candidates:
-                candidates.append(u)
-    link = page.find("link", rel="image_src")
-    if link and link.get("href") and urljoin(url, link["href"]) not in candidates:
-        candidates.append(urljoin(url, link["href"]))
-    for sc in page.find_all("script", type="application/ld+json"):          # schema.org NewsArticle "image"
-        for u in re.findall(r'"(?:image|thumbnailUrl|contentUrl|url)"\s*:\s*"(https?:[^"]+\.(?:jpe?g|png|webp)[^"]*)"',
-                            (sc.string or sc.get_text() or "").replace("\\/", "/"), re.I):
-            if u not in candidates:
-                candidates.append(u)
-
-    for img in content_area.find_all("img"):
-        srcset = img.get("srcset") or img.get("data-srcset")
-        biggest = srcset.split(",")[-1].strip().split(" ")[0] if srcset else None     # last = usually the largest
-        src = biggest or img.get("src") or img.get("data-src") or img.get("data-lazy-src")
-        if not src:
-            continue
-        src = urljoin(url, src)
-        if src.startswith("http") and src not in candidates:
-            candidates.append(src)
-
-    return text, candidates[:16]
-
+    """Best-effort fetch of a single article page (the default 'browser' approach). Returns (text, image candidates)."""
+    return _scrape_profile(url, source, "browser")
 
 
 def _parse_date(text):
@@ -240,47 +207,83 @@ def fetch_feed_entries(source_name, url, limit=15):
 def hydrate_entry(entry, sleep=time.sleep):
     """
     Adds full article text and a VERIFIED hero image to ONE entry (in place).
-    It works hard for an image before giving up (IMAGE_TRIES different candidates, 5-10):
-      1. the feed's own images,  2. the article page itself (og:image, twitter:image, JSON-LD, content images),
-      3. one more look, after a pause, at candidates that only failed because of network trouble.
-    Raises images.NoVerifiedImage only when that is done. The article is then skipped before any LLM credit is spent.
+
+    It does not give up after one way of asking. The page is looked at with up to four different approaches
+    (pagefetch.ladder: browser, mobile, AMP, minimal; plus an optional reader proxy), moving on to the next one whenever
+    the text is still too short or no picture has verified. A scheduled retry (entry["attempt"] > 0) starts from a
+    DIFFERENT approach than the previous try, and is more patient.
+
+    Text first: a story that cannot be written is not worth downloading pictures for, so thin text returns early
+    (generate.process_entry raises ThinSource, whose reason lists every approach that was tried).
+    Raises images.NoVerifiedImage only when every approach and every candidate picture has been used.
     """
     import config
+    import pagefetch
     from images import pick_verified_images, NoVerifiedImage, is_transient, fingerprint_of
     budget = config.retry_settings()["image_tries"]
+    need = config.source_settings()["min_words"]
+    attempt = int(entry.get("attempt") or 0)
+    ref, src = entry.get("url"), entry.get("source")
     text = strip_boilerplate(entry.get("text") or "")        # publisher disclaimers are not article text
-    src = entry.get("source")
     candidates = list(entry.get("images", []))
-    scraped = False
-    if len(text) < 1500 or not candidates:
+    rungs = pagefetch.ladder(attempt)
+    state = {"next": 0}
+    _DIAG.pop(ref, None)
+
+    def look():
+        """One more look at the article page, with the next approach on the ladder. False when the ladder is used up."""
+        nonlocal text
+        if state["next"] >= len(rungs):
+            return None
+        profile = rungs[state["next"]]
+        state["next"] += 1
         time.sleep(POLITE_DELAY)
-        full_text, page_imgs = _scrape_html_fallback(entry["url"], entry["source"])
-        scraped = True
+        if profile == "browser" and attempt == 0:
+            full_text, page_imgs = _scrape_html_fallback(ref, src)      # the default approach
+        else:
+            full_text, page_imgs = _scrape_profile(ref, src, profile, attempt)
         full_text = strip_boilerplate(full_text)
-        if full_text and len(full_text) > len(text):
-            text = full_text
-        for i in page_imgs:
-            if i not in candidates:
-                candidates.append(i)
+        if full_text and (len(full_text.split()), len(full_text)) > (len(text.split()), len(text)):
+            text = full_text                   # more real words wins (not more characters: a long blob is not an article)
+        fresh = [i for i in page_imgs if i not in candidates]
+        candidates.extend(fresh)
+        return fresh
+
+    def words():
+        return len(text.split())
+
+    if len(text) < 1500 or not candidates:
+        look()
+    while words() < need and look() is not None:               # still thin: a different approach
+        pass
     entry["text"] = text
-    ref = entry.get("url")
+    notes = _DIAG.pop(ref, [])
+    entry["_diag"] = " | ".join(notes)
+    if words() < need:
+        entry["images"] = candidates[:6]
+        return entry
+
     good, rejected = pick_verified_images(candidates, limit=3, max_tries=budget, referer=ref, source=src)
-    if not good and not scraped:                               # the feed's images were no good: ask the page itself
-        time.sleep(POLITE_DELAY)
-        _, page_imgs = _scrape_html_fallback(entry["url"], entry["source"])
-        tried = set(candidates)
-        fresh = [i for i in page_imgs if i not in tried]
-        candidates += fresh
-        good, more = pick_verified_images(fresh, limit=3, max_tries=max(1, budget - len(rejected)), referer=ref, source=src)
+    while not good:                                            # nothing verified: look at the page the next way
+        fresh = look()
+        if fresh is None:
+            break
+        if not fresh:
+            continue
+        got, more = pick_verified_images(fresh, limit=3, max_tries=max(3, budget - len(rejected)), referer=ref, source=src)
+        good += got
         rejected += more
     if not good:                                               # network-trouble failures get one more look after a pause
         again = [c for c, why in rejected if is_transient(why)][:max(2, budget // 2)]
         if again:
             sleep(3)
             good, _ = pick_verified_images(again, limit=3, max_tries=len(again), referer=ref, source=src)
+    notes = notes + _DIAG.pop(ref, [])
+    entry["_diag"] = " | ".join(notes)
     if not good:
         why = "; ".join(f"{u.split('/')[-1][:30]}: {w}" for u, w in rejected[:3]) or "no image found"
-        raise NoVerifiedImage(f"no verifiable image after {len(rejected)} candidate(s) ({why})",
+        tried = f" [pages: {entry['_diag']}]" if entry["_diag"] else ""
+        raise NoVerifiedImage(f"no verifiable image after {len(rejected)} candidate(s) ({why}){tried}",
                               transient=bool(rejected) and all(is_transient(w) for _, w in rejected))
     import watermarks
     if watermarks.is_watermarked(entry.get("url") or ""):

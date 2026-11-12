@@ -46,3 +46,19 @@ export function TrendThumbRow({ t, fill }: { t: Trend; fill?: boolean }) {
     </Link>
   );
 }
+
+export function TrendMiniCard({ t }: { t: Trend }) {
+  const published = formatPublished(t.publishedAt);
+  return (
+    <Link to="/trends/$slug" params={{ slug: t.slug }} className="glass-card group relative flex h-full flex-col overflow-hidden rounded-2xl">
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden">
+        <img src={t.img} alt={t.title} loading="lazy" width={1024} height={640} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+      </div>
+      <div className="relative min-w-0 flex-1 p-3 sm:p-4">
+        <p className="truncate text-[10px] font-bold tracking-wider uppercase text-muted-foreground sm:text-[11px]">#{trendTag(t)}</p>
+        <h3 className="mt-1 text-sm leading-snug font-bold sm:text-base"><ClampTitle text={t.title} lines={3} /></h3>
+        <p className="mt-1.5 truncate text-xs text-muted-foreground">{published ? `${published} · ` : ""}{t.time} read</p>
+      </div>
+    </Link>
+  );
+}

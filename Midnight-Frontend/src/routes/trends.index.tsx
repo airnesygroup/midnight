@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { PublicationDatePicker } from "@/components/publication-date-filter";
 import { emptyPublicationDate, filterByPublicationDate, hasPublicationDate } from "@/lib/publication-date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { TrendBigCard, TrendThumbRow } from "@/components/trend-cards";
+import { TrendBigCard, TrendMiniCard, TrendThumbRow } from "@/components/trend-cards";
+import { LeadLayout, leadCount } from "@/components/cards";
 import { searchTrends, setTrends, sortTrends, trendHashtags, trends, trendsInHashtag, type Trend } from "@/data/trends";
 import { trendsQuery } from "@/lib/trends.functions";
 import type { SectionSort } from "@/data/news";
@@ -95,18 +96,9 @@ function TrendsPage() {
 
       {top ? (
         <div className="mt-8 space-y-6">
-          {/* The lead photo keeps a fixed shape; extra trends flow below it instead of stretching it. */}
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <div className="aspect-[4/5] sm:aspect-[4/3] lg:aspect-[6/5] lg:self-start [&>div]:h-full">
-              <TrendBigCard t={top} />
-            </div>
-            <div className="space-y-3">
-              {rest.slice(0, 6).map((t) => (
-                <TrendThumbRow key={t.slug} t={t} />
-              ))}
-            </div>
-          </div>
-          {rest.length > 6 && <MoreTrends key={`${active ?? "all"}-${q ?? ""}-${sort}-${date.day}-${date.month}-${date.year}`} items={rest.slice(6)} />}
+          {/* Lead photo with cards beneath it; the list beside it stretches to match, so no blank space is left. */}
+          <LeadLayout hero={<TrendBigCard t={top} />} items={rest} mini={(t) => <TrendMiniCard t={t} />} row={(t) => <TrendThumbRow t={t} fill />} />
+          {rest.length > leadCount(rest.length) && <MoreTrends key={`${active ?? "all"}-${q ?? ""}-${sort}-${date.day}-${date.month}-${date.year}`} items={rest.slice(leadCount(rest.length))} />}
         </div>
       ) : (
         <section className="mt-8">

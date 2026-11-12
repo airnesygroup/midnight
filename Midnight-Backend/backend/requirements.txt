@@ -8,3 +8,5 @@ groq>=1.7
 pymongo[srv]>=4.8
 nh3>=0.2.18
 Pillow>=10.3
+# optional: better article-text extraction (used automatically when installed)
+# trafilatura>=1.12

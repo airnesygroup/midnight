@@ -89,12 +89,13 @@ def key_pause_seconds():
 
 def item_retry_settings():
     """How often a skipped/failed story is looked at again before it is abandoned for good.
-      ITEM_MAX_ATTEMPTS  total tries per article that failed for a retryable reason (default 5, 2..10)
+      ITEM_MAX_ATTEMPTS  total tries per article that failed for a retryable reason (default 6 = the first try + 5
+                     retries, 2..10). Every retry uses a DIFFERENT approach (pagefetch.ladder).
     Waits between tries are 15 min, 30 min, 1 h, 2 h, 4 h (storage.RETRY_MINUTES)."""
     try:
-        n = int(float(env("ITEM_MAX_ATTEMPTS", "5")))
+        n = int(float(env("ITEM_MAX_ATTEMPTS", "6")))
     except ValueError:
-        n = 5
+        n = 6
     return {"max_attempts": max(2, min(10, n))}
 
 

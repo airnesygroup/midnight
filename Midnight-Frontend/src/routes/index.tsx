@@ -77,7 +77,7 @@ function Index() {
 
         {/* Latest + World */}
         <section className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-          <div className="glass rounded-[2rem] p-4 sm:p-6">
+          <div className="list-panel">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-extrabold">Latest</h2>
               <span className="flex items-center gap-2 text-sm font-semibold text-live">
@@ -92,7 +92,7 @@ function Index() {
             </div>
           </div>
           {/* World cards stretch to match the Latest column height. Do not change this sizing. */}
-          <div className="glass flex flex-col rounded-[2rem] p-4 sm:p-6">
+          <div className="list-panel flex flex-col">
             <SectionHeader to="world" title="World" sub="The stories shaping the week" />
             <div className="mt-5 flex flex-1 flex-col gap-3">
               {world.length === 0 && <EmptyCard />}
@@ -115,7 +115,7 @@ function Index() {
             </div>
           </div>
           {politicsNews.length > C.politicsTop && (
-          <div className="glass rounded-[2rem] p-4 sm:p-6">
+          <div className="list-panel">
             <div className="flex flex-col gap-3">
               {politicsNews.slice(C.politicsTop).map((s) => (
                 <ThumbRow key={s.slug} s={s} large />
@@ -153,7 +153,7 @@ function Index() {
               {columns.length > 0 && (
                 <div className={columns.length === 2 ? "grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2" : "grid grid-cols-[minmax(0,1fr)] gap-6"}>
                   {columns.map((column, i) => (
-                    <div key={i} className="glass rounded-[2rem] p-4 sm:p-6">
+                    <div key={i} className="list-panel">
                       <div className="flex flex-col gap-3">
                         {column.map((s) => (
                           <ThumbRow key={s.slug} s={s} large />

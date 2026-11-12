@@ -7,8 +7,10 @@ reason was one of the fixed checks, so the writer looks at those stories again (
     python reopen_skipped.py            # shows what it would reopen
     python reopen_skipped.py --go       # does it
 
-Reasons reopened by default: failed fact-check, no verifiable image. Never reopened: duplicates, thin source text,
-and anything that was published. Use --also "thin" to include other reasons (substring match).
+Reasons reopened by default: failed fact-check, no verifiable image. Never reopened: duplicates and anything that was
+published. NOTE: prefer `python requeue_stuck.py` - it keeps the history and gives each story a fresh set of tries with
+different approaches (it also reopens thin-source and broken-download casualties). Use --also "thin" here to include
+other reasons (substring match).
 """
 import argparse
 import re

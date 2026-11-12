@@ -226,6 +226,17 @@
   border: 1px solid var(--border);
   box-shadow: var(--shadow-glass);
 }
+/* Padded glass box for card lists: only from the sm breakpoint up. On phones the cards run the full width, unboxed. */
+@utility list-panel {
+  @media (min-width: 40rem) {
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-glass);
+    border-radius: 2rem;
+    padding: 1.5rem;
+  }
+}
 @utility glass-strong {
   background: var(--glass-strong);
   backdrop-filter: blur(24px) saturate(160%);

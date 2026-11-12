@@ -26,7 +26,11 @@ HEADERS = {
                   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
     "Accept": "image/avif,image/webp,image/*;q=0.8,*/*;q=0.5",
 }
-MIN_W, MIN_H, MIN_BYTES, MAX_BYTES = 400, 220, 12_000, 6_000_000
+MIN_W, MIN_H, MIN_BYTES, MAX_BYTES = 400, 220, 4_000, 6_000_000   # MIN_BYTES: a real 640x360 thumbnail can be ~9 KB
+MIN_STDDEV = 6.0            # a picture with almost no tonal variation is a blank/solid placeholder, however big
+PARTIAL_OK_BYTES = 64_000   # a stream that broke after this much is judged on its (intact) header
+MOBILE_UA = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
+             "Version/17.4 Mobile/15E148 Safari/604.1")
 MIN_ASPECT, MAX_ASPECT = 0.6, 3.2
 
 BAD_URL_PARTS = ("logo", "icon", "favicon", "avatar", "sprite", "spacer", "pixel.", "tracking",
@@ -46,7 +50,8 @@ class NoVerifiedImage(Exception):
         self.transient = transient
 
 
-TRANSIENT_MARKERS = ("request failed", "unreachable", "HTTP 5", "HTTP 429", "HTTP 408", "HTTP 403", "HTTP 401", "only 0 bytes")
+TRANSIENT_MARKERS = ("request failed", "unreachable", "HTTP 5", "HTTP 429", "HTTP 408", "HTTP 403", "HTTP 401",
+                     "HTTP 406", "only 0 bytes", "stream broke", "timed out")
 
 
 def is_transient(reason):
@@ -76,6 +81,7 @@ KNOWN_GENERIC = {
 }
 
 _FP = {}                   # final image URL -> fingerprint of the bytes that were just verified (bounded)
+SOFT = set()               # accepted, but only as a last resort: huge files, or a download that broke after a good header
 
 
 def dhash(im, size=DHASH_SIZE):
@@ -180,6 +186,21 @@ def record_use(fp, url, source=None, ref=None):
     GUARD.record(fp, url, source, ref)
 
 
+def _read_capped(r):
+    """Reads an image response. Returns (bytes, state): "ok" (whole file), "big" (stopped at MAX_BYTES) or "broke"
+    (the connection died part-way: ChunkedEncodingError / read timeout while streaming). Never raises: a broken
+    stream used to escape from here and take the whole article down with it."""
+    data = bytearray()
+    try:
+        for chunk in r.iter_content(65536):
+            data += chunk
+            if len(data) > MAX_BYTES:
+                return bytes(data), "big"
+    except Exception:  # noqa: BLE001
+        return bytes(data), "broke"
+    return bytes(data), "ok"
+
+
 def _verify_once(url, get=requests.get, referer=None):
     """One look at one image. Returns (ok: bool, reason: str, final_url: str|None)."""
     hdr = {**HEADERS, "Referer": referer} if referer else HEADERS
@@ -192,19 +213,30 @@ def _verify_once(url, get=requests.get, referer=None):
     if url.startswith("http://"):
         candidates.insert(0, "https://" + url[len("http://"):])
     last = "unreachable"
+    origin = "{0.scheme}://{0.netloc}/".format(urlsplit(referer)) if referer else None
+    header_sets = [hdr,
+                   {**hdr, "Accept": "*/*"},
+                   {"User-Agent": MOBILE_UA, "Accept": "*/*", **({"Referer": referer} if referer else {})},
+                   {"User-Agent": HEADERS["User-Agent"], **({"Referer": origin} if origin else {})}]
     for u in candidates:
-        try:
-            r = get(u, headers=hdr, timeout=12, stream=True, allow_redirects=True)
-        except Exception as e:  # noqa: BLE001
-            last = f"request failed ({type(e).__name__})"
+        r = None
+        for h in header_sets:                # 406/403/401: the server dislikes our headers; ask a different way
+            try:
+                r = get(u, headers=h, timeout=12, stream=True, allow_redirects=True)
+            except Exception as e:  # noqa: BLE001
+                last = f"request failed ({type(e).__name__})"
+                r = None
+                break
+            if r.status_code not in (406, 403, 401):
+                break
+            last = f"HTTP {r.status_code}"
+            try:
+                r.close()
+            except Exception:  # noqa: BLE001
+                pass
+        if r is None:
             continue
         try:
-            if r.status_code == 406:        # server dislikes our Accept header (CDN format negotiation): ask for anything
-                try:
-                    r.close()
-                except Exception:
-                    pass
-                r = get(u, headers={**hdr, "Accept": "*/*"}, timeout=12, stream=True, allow_redirects=True)
             if r.status_code != 200:
                 last = f"HTTP {r.status_code}"
                 continue
@@ -214,19 +246,29 @@ def _verify_once(url, get=requests.get, referer=None):
             if not ctype.startswith("image/") or "svg" in ctype:
                 last = f"content type {ctype or 'missing'} is not a photo"
                 continue
-            data = b""
-            for chunk in r.iter_content(65536):
-                data += chunk
-                if len(data) > MAX_BYTES:
-                    break
-            if len(data) > MAX_BYTES:
-                last = "file too large"
-                continue
+            size_hdr = r.headers.get("Content-Length")
+            data, state = _read_capped(r)
         finally:
             try:
                 r.close()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
+        if state != "ok":
+            # Too big to fetch whole, or the connection broke mid-download. The header (dimensions) is at the start of
+            # the file, so judge the picture on that. Such a picture is only used when no normal one verifies (SOFT).
+            if len(data) >= (MAX_BYTES if state == "big" else PARTIAL_OK_BYTES) and _is_image_bytes(data):
+                try:
+                    from PIL import Image
+                    with Image.open(io.BytesIO(data)) as im:
+                        w, h = im.size
+                except Exception:  # noqa: BLE001
+                    w = h = 0
+                if w >= MIN_W and h >= MIN_H and MIN_ASPECT <= w / h <= MAX_ASPECT:
+                    SOFT.add(u)
+                    mb = f", {int(size_hdr) / 1e6:.0f} MB" if (size_hdr or "").isdigit() else ""
+                    return True, f"ok ({w}x{h}, {'oversize' if state == 'big' else 'partial download'}{mb})", u
+            last = "file too large" if state == "big" else "stream broke (download interrupted)"
+            continue
         if len(data) < MIN_BYTES:
             last = f"only {len(data)} bytes"
             continue
@@ -234,11 +276,12 @@ def _verify_once(url, get=requests.get, referer=None):
             last = "bytes are not a real image"
             continue
         try:
-            from PIL import Image
+            from PIL import Image, ImageStat
             with Image.open(io.BytesIO(data)) as im:
                 im.load()
                 w, h = im.size
                 fp = dhash(im)
+                flat = ImageStat.Stat(im.convert("L")).stddev[0] < MIN_STDDEV     # measured on real pixels, not a downscale
         except Exception:
             # AVIF without Pillow support: signature + size already checked, accept.
             if data[4:12] in (b"ftypavif", b"ftypavis"):
@@ -250,6 +293,9 @@ def _verify_once(url, get=requests.get, referer=None):
             continue
         if not MIN_ASPECT <= w / h <= MAX_ASPECT:
             last = f"odd shape ({w}x{h}), probably a banner/logo"
+            continue
+        if flat:
+            last = f"blank image ({w}x{h}): no picture in it"
             continue
         _remember_fp(u, fp)
         return True, f"ok ({w}x{h})", u
@@ -278,15 +324,20 @@ def pick_verified_images(candidates, limit=3, get=requests.get, max_tries=None, 
         import config
         max_tries = config.retry_settings()["image_tries"]
     guard = guard or GUARD
-    good, rejected = [], []
+    good, rejected, soft = [], [], []
     for c in candidates:
-        if len(good) >= limit or len(good) + len(rejected) >= max_tries:
+        if len(good) >= limit or len(good) + len(rejected) + len(soft) >= max_tries:
             break
         ok, why, final = verify_image(c, get=get, referer=referer)
         if ok:
+            if final in SOFT:                  # huge / interrupted download: keep it, but only if nothing better verifies
+                soft.append(final)
+                continue
             generic = guard.why_generic(fingerprint_of(final), source)
             if generic:
                 rejected.append((c, generic))
                 continue
         (good if ok else rejected).append(final if ok else (c, why))
+    if not good and soft:
+        good = soft[:limit]
     return good, rejected
