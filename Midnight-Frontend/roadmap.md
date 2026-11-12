@@ -216,3 +216,6 @@
 - [x] Continuous inner line in logo letters.
 - [x] Subtler borders on jump arrows and search bars.
 - [x] Header colour glow only on article pages.
+
+- [x] Keep square cards but remove the gap above them under the section lead photo (/section/*)
+- [x] Square cards stretch so the left column bottom lines up with the side list at every screen size

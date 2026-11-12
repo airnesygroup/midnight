@@ -81,10 +81,10 @@ export function MiniCard({ s: story }: { s: Card }) {
   const published = article ? formatPublished(article.publishedAt) : "";
   return (
     <Link to="/article/$slug" params={{ slug: article?.slug ?? slugify(s.title) }} className="glass-card group relative flex h-full flex-col overflow-hidden rounded-2xl">
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden">
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden lg:aspect-auto lg:min-h-[120px] lg:flex-1">
         <img src={s.img} alt={s.title} loading="lazy" width={1024} height={640} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
       </div>
-      <div className="relative min-w-0 flex-1 p-3 sm:p-4">
+      <div className="relative min-w-0 flex-1 p-3 sm:p-4 lg:flex-none">
         <p className="truncate text-[10px] font-bold tracking-wider uppercase text-muted-foreground sm:text-[11px]">{s.tag}</p>
         <h3 className="mt-1 text-sm leading-snug font-bold sm:text-base"><ClampTitle text={s.title} lines={3} /></h3>
         <p className="mt-1.5 truncate text-xs text-muted-foreground">{published ? `${published} · ` : ""}{s.time} read</p>
@@ -94,26 +94,26 @@ export function MiniCard({ s: story }: { s: Card }) {
 }
 
 /** How many of a section's stories LeadLayout uses; the caller lists the rest below it. */
-export const leadCount = (n: number) => (n >= 4 ? 9 : 6);
+export const leadCount = (n: number, withMinis = true) => (withMinis && n >= 4 ? 9 : 6);
 
 /**
  * Lead photo with 2 (3 on very wide screens) cards directly beneath it, and a list beside it that
  * stretches to the same height, so neither column leaves empty space.
  */
-export function LeadLayout<T extends { slug: string }>({ hero, items, mini, row }: { hero: ReactNode; items: T[]; mini: (item: T) => ReactNode; row: (item: T) => ReactNode }) {
-  const withMinis = items.length >= 4;
+export function LeadLayout<T extends { slug: string }>({ hero, items, mini, row }: { hero: ReactNode; items: T[]; mini?: (item: T) => ReactNode; row: (item: T) => ReactNode }) {
+  const withMinis = !!mini && items.length >= 4;
   const minis = withMinis ? items.slice(0, 3) : [];
   // The third mini card only fits under the photo on very wide screens; elsewhere it leads the list instead.
   const aside: { item: T; className: string }[] = withMinis
-    ? [{ item: items[2], className: "xl:hidden" }, ...items.slice(3, 9).map((item) => ({ item, className: "" }))]
+    ? [{ item: items[2]!, className: "xl:hidden" }, ...items.slice(3, 9).map((item) => ({ item, className: "" }))]
     : items.slice(0, 6).map((item) => ({ item, className: "" }));
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-      <div className="min-w-0 space-y-4">
-        <div className="aspect-[4/5] sm:aspect-[4/3] lg:aspect-[6/5] [&>div]:h-full">{hero}</div>
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="h-[420px] shrink-0 sm:h-[460px] lg:h-[520px] [&>div]:h-full">{hero}</div>
         {minis.length > 0 && (
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {minis.map((item, i) => <div key={item.slug} className={i === 2 ? "max-xl:hidden" : ""}>{mini(item)}</div>)}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:flex-1 xl:grid-cols-3">
+            {minis.map((item, i) => <div key={item.slug} className={i === 2 ? "max-xl:hidden" : ""}>{mini?.(item)}</div>)}
           </div>
         )}
       </div>
